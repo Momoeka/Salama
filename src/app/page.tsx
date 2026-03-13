@@ -1,4 +1,6 @@
-import { SignUpButton, Show } from "@clerk/nextjs";
+import { SignUpButton } from "@clerk/nextjs";
+import { auth } from "@clerk/nextjs/server";
+import { redirect } from "next/navigation";
 import Link from "next/link";
 
 const features = [
@@ -52,7 +54,10 @@ const features = [
   },
 ];
 
-export default function Home() {
+export default async function Home() {
+  const { userId } = await auth();
+  if (userId) redirect("/feed");
+
   return (
     <div className="relative overflow-hidden">
       {/* Ambient background */}
@@ -86,20 +91,12 @@ export default function Home() {
           </p>
 
           <div className="animate-slide-up flex flex-col items-center justify-center gap-4 sm:flex-row" style={{ animationDelay: "0.3s", animationFillMode: "backwards" }}>
-            <Show when="signed-out">
-              <SignUpButton mode="modal">
-                <button className="group relative overflow-hidden rounded-2xl bg-gradient-to-r from-violet-600 to-purple-600 px-8 py-4 text-base font-semibold text-white shadow-lg shadow-purple-500/25 transition-all hover:shadow-xl hover:shadow-purple-500/30 hover:scale-[1.02] active:scale-[0.98]">
-                  <span className="relative z-10">Get Started Free</span>
-                  <div className="absolute inset-0 bg-gradient-to-r from-purple-600 to-pink-600 opacity-0 transition-opacity group-hover:opacity-100" />
-                </button>
-              </SignUpButton>
-            </Show>
-            <Show when="signed-in">
-              <Link href="/feed" className="group relative overflow-hidden rounded-2xl bg-gradient-to-r from-violet-600 to-purple-600 px-8 py-4 text-base font-semibold text-white shadow-lg shadow-purple-500/25 transition-all hover:shadow-xl hover:shadow-purple-500/30 hover:scale-[1.02] active:scale-[0.98]">
-                <span className="relative z-10">Go to Feed</span>
+            <SignUpButton mode="modal">
+              <button className="group relative overflow-hidden rounded-2xl bg-gradient-to-r from-violet-600 to-purple-600 px-8 py-4 text-base font-semibold text-white shadow-lg shadow-purple-500/25 transition-all hover:shadow-xl hover:shadow-purple-500/30 hover:scale-[1.02] active:scale-[0.98]">
+                <span className="relative z-10">Get Started Free</span>
                 <div className="absolute inset-0 bg-gradient-to-r from-purple-600 to-pink-600 opacity-0 transition-opacity group-hover:opacity-100" />
-              </Link>
-            </Show>
+              </button>
+            </SignUpButton>
             <Link href="#features" className="rounded-2xl border border-border px-8 py-4 text-base font-semibold text-foreground transition-all hover:bg-secondary hover:border-muted-foreground/30 active:scale-[0.98]">
               See Features
             </Link>
@@ -175,18 +172,11 @@ export default function Home() {
         <div className="relative mx-auto max-w-3xl overflow-hidden rounded-3xl border border-border bg-gradient-to-br from-purple-600/10 via-card to-pink-600/10 p-12 text-center backdrop-blur-sm">
           <h2 className="relative mb-4 text-3xl font-bold text-foreground sm:text-4xl">Ready to Share Your World?</h2>
           <p className="relative mb-8 text-muted-foreground">Join SALAMA today and start your visual storytelling journey.</p>
-          <Show when="signed-out">
-            <SignUpButton mode="modal">
-              <button className="relative rounded-2xl bg-gradient-to-r from-violet-600 to-purple-600 px-8 py-4 text-base font-semibold text-white shadow-lg shadow-purple-500/25 transition-all hover:shadow-xl hover:shadow-purple-500/30 hover:scale-[1.02]">
-                Create Your Account
-              </button>
-            </SignUpButton>
-          </Show>
-          <Show when="signed-in">
-            <Link href="/upload" className="inline-block rounded-2xl bg-gradient-to-r from-violet-600 to-purple-600 px-8 py-4 text-base font-semibold text-white shadow-lg shadow-purple-500/25 transition-all hover:shadow-xl hover:shadow-purple-500/30 hover:scale-[1.02]">
-              Upload Your First Post
-            </Link>
-          </Show>
+          <SignUpButton mode="modal">
+            <button className="relative rounded-2xl bg-gradient-to-r from-violet-600 to-purple-600 px-8 py-4 text-base font-semibold text-white shadow-lg shadow-purple-500/25 transition-all hover:shadow-xl hover:shadow-purple-500/30 hover:scale-[1.02]">
+              Create Your Account
+            </button>
+          </SignUpButton>
         </div>
       </section>
     </div>

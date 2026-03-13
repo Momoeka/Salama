@@ -2,12 +2,14 @@ import { supabaseAdmin } from "@/lib/supabase-admin";
 import Link from "next/link";
 import { StoriesBar } from "@/components/stories-bar";
 import { getActiveStories } from "@/app/actions/stories";
-import { FeedGrid } from "./feed-grid";
+import { getOrCreateUser } from "@/lib/user";
+import { PostFeedItem } from "./post-feed-item";
 
 export const dynamic = "force-dynamic";
 
 export default async function FeedPage() {
-  const [{ data: posts }, storiesData] = await Promise.all([
+  const [user, { data: posts }, storiesData] = await Promise.all([
+    getOrCreateUser(),
     supabaseAdmin
       .from("posts")
       .select(
@@ -18,19 +20,92 @@ export default async function FeedPage() {
       )
       .eq("visibility", "public")
       .order("created_at", { ascending: false })
-      .limit(30),
+      .limit(20),
     getActiveStories(),
   ]);
 
+  // For each post, fetch like count, comment count, user liked status, and recent comments in parallel
+  const enrichedPosts = posts
+    ? await Promise.all(
+        posts.map(async (post: any) => {
+          const [
+            { count: likeCount },
+            { count: commentCount },
+            { data: userLike },
+            { data: recentComments },
+          ] = await Promise.all([
+            supabaseAdmin
+              .from("likes")
+              .select("*", { count: "exact", head: true })
+              .eq("post_id", post.id),
+            supabaseAdmin
+              .from("comments")
+              .select("*", { count: "exact", head: true })
+              .eq("post_id", post.id),
+            user
+              ? supabaseAdmin
+                  .from("likes")
+                  .select("id")
+                  .eq("post_id", post.id)
+                  .eq("user_id", user.id)
+                  .maybeSingle()
+              : Promise.resolve({ data: null }),
+            supabaseAdmin
+              .from("comments")
+              .select(
+                `
+              id,
+              content,
+              created_at,
+              users:user_id (id, username, avatar_url)
+            `
+              )
+              .eq("post_id", post.id)
+              .order("created_at", { ascending: false })
+              .limit(3),
+          ]);
+
+          return {
+            id: post.id,
+            image_url: post.image_url,
+            caption: post.caption || "",
+            media_type: post.media_type,
+            created_at: post.created_at,
+            user: {
+              id: post.users?.id || "",
+              username: post.users?.username || "Unknown",
+              avatar_url: post.users?.avatar_url || null,
+              clerk_id: post.users?.clerk_id || "",
+            },
+            likeCount: likeCount || 0,
+            commentCount: commentCount || 0,
+            hasLiked: !!userLike,
+            recentComments: (recentComments || [])
+              .reverse()
+              .map((c: any) => ({
+                id: c.id,
+                content: c.content,
+                created_at: c.created_at,
+                user: {
+                  id: c.users?.id || "",
+                  username: c.users?.username || "Unknown",
+                  avatar_url: c.users?.avatar_url || null,
+                },
+              })),
+          };
+        })
+      )
+    : [];
+
   return (
-    <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6 lg:px-8">
-      <h1 className="mb-8 text-3xl font-bold text-foreground">Feed</h1>
-
+    <div className="mx-auto max-w-xl pb-8">
       {/* Stories Bar */}
-      <StoriesBar storiesData={storiesData} />
+      <div className="px-4 pt-6">
+        <StoriesBar storiesData={storiesData} />
+      </div>
 
-      {!posts || posts.length === 0 ? (
-        <div className="rounded-2xl border border-border bg-card p-12 text-center">
+      {!enrichedPosts || enrichedPosts.length === 0 ? (
+        <div className="mx-4 rounded-2xl border border-border bg-card p-12 text-center">
           <svg
             xmlns="http://www.w3.org/2000/svg"
             width="48"
@@ -61,7 +136,11 @@ export default async function FeedPage() {
           </Link>
         </div>
       ) : (
-        <FeedGrid posts={posts.map((p: any) => ({ ...p, users: p.users as any }))} />
+        <div className="flex flex-col">
+          {enrichedPosts.map((post) => (
+            <PostFeedItem key={post.id} post={post} />
+          ))}
+        </div>
       )}
     </div>
   );
