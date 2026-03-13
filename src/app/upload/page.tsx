@@ -2,6 +2,7 @@
 
 import { useState, useRef, useCallback } from "react";
 import { uploadPost } from "./actions";
+import { compressImage } from "@/lib/image-compress";
 
 const IMAGE_FILTERS = [
   { name: "Normal", css: "none" },
@@ -68,6 +69,12 @@ export default function UploadPage() {
   const [pollEnabled, setPollEnabled] = useState(false);
   const [pollQuestion, setPollQuestion] = useState("");
   const [pollOptions, setPollOptions] = useState(["", ""]);
+  const [altText, setAltText] = useState("");
+  const [collaboratorId, setCollaboratorId] = useState<string | null>(null);
+  const [collaboratorName, setCollaboratorName] = useState("");
+  const [collabSearch, setCollabSearch] = useState("");
+  const [collabResults, setCollabResults] = useState<any[]>([]);
+  const [showCollabSearch, setShowCollabSearch] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const selectedFile = useRef<File | null>(null);
 
@@ -130,6 +137,11 @@ export default function UploadPage() {
     try {
       let fileToUpload = selectedFile.current;
 
+      // Compress image to max 2MB before upload
+      if (!isVideo) {
+        fileToUpload = await compressImage(fileToUpload);
+      }
+
       // Bake the filter into the image if a filter is selected (skip for videos)
       if (selectedFilter !== "none" && !isVideo) {
         fileToUpload = await applyFilterToFile(fileToUpload, selectedFilter);
@@ -145,6 +157,12 @@ export default function UploadPage() {
       }
       if (locationName.trim()) {
         formData.append("location_name", locationName.trim());
+      }
+      if (altText.trim()) {
+        formData.append("alt_text", altText.trim());
+      }
+      if (collaboratorId) {
+        formData.append("collaborator_id", collaboratorId);
       }
       if (pollEnabled && pollQuestion.trim()) {
         const validOptions = pollOptions.filter((o) => o.trim());
@@ -327,6 +345,23 @@ export default function UploadPage() {
           />
         </div>
 
+        {/* Alt Text (accessibility) */}
+        {!isVideo && (
+          <div>
+            <label htmlFor="alt-text" className="mb-2 block text-sm font-medium text-foreground">
+              Alt Text <span className="text-xs text-muted-foreground">(optional, for accessibility)</span>
+            </label>
+            <input
+              id="alt-text"
+              type="text"
+              value={altText}
+              onChange={(e) => setAltText(e.target.value)}
+              placeholder="Describe this image for visually impaired users..."
+              className="w-full rounded-xl border border-border bg-secondary px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+            />
+          </div>
+        )}
+
         {/* Visibility */}
         <div>
           <label className="mb-2 block text-sm font-medium text-foreground">
@@ -399,6 +434,86 @@ export default function UploadPage() {
                 </button>
               )}
             </div>
+          )}
+        </div>
+
+        {/* Collaborator */}
+        <div>
+          <button
+            type="button"
+            onClick={() => setShowCollabSearch(!showCollabSearch)}
+            className={`flex items-center gap-2 rounded-lg border px-4 py-2 text-sm transition-colors ${
+              collaboratorId
+                ? "border-primary bg-primary/10 text-primary"
+                : "border-border text-muted-foreground hover:bg-secondary hover:text-foreground"
+            }`}
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+              <circle cx="9" cy="7" r="4" />
+              <line x1="19" x2="19" y1="8" y2="14" />
+              <line x1="22" x2="16" y1="11" y2="11" />
+            </svg>
+            {collaboratorName || "Tag Collaborator"}
+          </button>
+          {showCollabSearch && !collaboratorId && (
+            <div className="mt-3">
+              <input
+                type="text"
+                value={collabSearch}
+                onChange={async (e) => {
+                  setCollabSearch(e.target.value);
+                  if (e.target.value.length >= 2) {
+                    const res = await fetch(`/api/search-users?q=${encodeURIComponent(e.target.value)}`);
+                    const data = await res.json();
+                    setCollabResults(data.users || []);
+                  } else {
+                    setCollabResults([]);
+                  }
+                }}
+                placeholder="Search for a user..."
+                className="w-full rounded-xl border border-border bg-secondary px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+              />
+              {collabResults.length > 0 && (
+                <div className="mt-2 max-h-40 overflow-y-auto rounded-xl border border-border bg-card">
+                  {collabResults.map((u: any) => (
+                    <button
+                      key={u.id}
+                      type="button"
+                      onClick={() => {
+                        setCollaboratorId(u.id);
+                        setCollaboratorName(u.username);
+                        setCollabSearch("");
+                        setCollabResults([]);
+                        setShowCollabSearch(false);
+                      }}
+                      className="flex w-full items-center gap-2 px-4 py-2 text-sm hover:bg-secondary transition-colors"
+                    >
+                      {u.avatar_url ? (
+                        <img src={u.avatar_url} alt="" className="h-7 w-7 rounded-full object-cover" />
+                      ) : (
+                        <div className="flex h-7 w-7 items-center justify-center rounded-full bg-primary text-xs text-primary-foreground">
+                          {u.username?.[0]?.toUpperCase()}
+                        </div>
+                      )}
+                      <span className="text-foreground">{u.username}</span>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+          {collaboratorId && (
+            <button
+              type="button"
+              onClick={() => {
+                setCollaboratorId(null);
+                setCollaboratorName("");
+              }}
+              className="mt-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
+            >
+              Remove collaborator
+            </button>
           )}
         </div>
 

@@ -1,11 +1,14 @@
 "use client";
 
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback, useRef, useTransition } from "react";
 import type { UserWithStories } from "@/app/actions/stories";
+import { deleteStory } from "@/app/actions/stories";
+import { reactToStory } from "@/app/actions/story-reactions";
 
 interface StoryViewerProps {
   allUserStories: UserWithStories[];
   initialUserIndex: number;
+  currentUserId?: string;
   onClose: () => void;
 }
 
@@ -14,11 +17,14 @@ const STORY_DURATION = 5000; // 5 seconds per story
 export function StoryViewer({
   allUserStories,
   initialUserIndex,
+  currentUserId,
   onClose,
 }: StoryViewerProps) {
   const [userIndex, setUserIndex] = useState(initialUserIndex);
   const [storyIndex, setStoryIndex] = useState(0);
   const [progress, setProgress] = useState(0);
+  const [isPending, startTransition] = useTransition();
+  const [floatingEmoji, setFloatingEmoji] = useState<string | null>(null);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const startTimeRef = useRef<number>(Date.now());
 
@@ -127,6 +133,30 @@ export function StoryViewer({
     }
   }
 
+  function handleDelete() {
+    if (!currentStory) return;
+    startTransition(async () => {
+      try {
+        await deleteStory(currentStory.id);
+        // If this was the last story for this user, go to next user or close
+        if (currentUser.stories.length <= 1) {
+          if (userIndex < allUserStories.length - 1) {
+            setUserIndex((prev) => prev + 1);
+            setStoryIndex(0);
+          } else {
+            onClose();
+          }
+        } else {
+          goNext();
+        }
+      } catch {
+        // ignore
+      }
+    });
+  }
+
+  const isOwnStory = currentUserId === currentUser?.user_id;
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/90">
       {/* Close button */}
@@ -196,6 +226,37 @@ export function StoryViewer({
           <span className="text-xs text-white/60">
             {timeAgo(currentStory.created_at)}
           </span>
+          <span className="text-xs text-white/60">
+            {timeLeft(currentStory.expires_at)}
+          </span>
+          <div className="ml-auto flex items-center gap-2">
+            {isOwnStory && (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleDelete();
+                }}
+                disabled={isPending}
+                className="flex h-8 w-8 items-center justify-center rounded-full bg-red-500/20 text-white backdrop-blur-sm transition-colors hover:bg-red-500/40 disabled:opacity-50"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <path d="M3 6h18" />
+                  <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" />
+                  <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" />
+                </svg>
+              </button>
+            )}
+          </div>
         </div>
 
         {/* Media content */}
@@ -222,12 +283,57 @@ export function StoryViewer({
 
         {/* Caption at bottom */}
         {currentStory.caption && (
-          <div className="absolute bottom-0 left-0 right-0 z-30 bg-gradient-to-t from-black/80 to-transparent px-4 pb-6 pt-12">
+          <div className="absolute bottom-14 left-0 right-0 z-30 bg-gradient-to-t from-black/80 to-transparent px-4 pb-4 pt-12">
             <p className="text-sm text-white drop-shadow-lg">
               {currentStory.caption}
             </p>
           </div>
         )}
+
+        {/* Floating emoji animation */}
+        {floatingEmoji && (
+          <div
+            key={Date.now()}
+            className="pointer-events-none absolute bottom-16 left-1/2 z-40 -translate-x-1/2 text-5xl"
+            style={{
+              animation: "emojiFloat 1s ease-out forwards",
+            }}
+          >
+            {floatingEmoji}
+          </div>
+        )}
+
+        {/* Emoji reaction bar */}
+        {!isOwnStory && currentUserId && (
+          <div
+            className="absolute bottom-0 left-0 right-0 z-30 flex items-center justify-center gap-4 bg-black/50 px-4 py-3 backdrop-blur-sm"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {["❤️", "😂", "😮", "😢", "🔥", "👏"].map((emoji) => (
+              <button
+                key={emoji}
+                onClick={() => {
+                  setFloatingEmoji(emoji);
+                  setTimeout(() => setFloatingEmoji(null), 1000);
+                  startTransition(() => {
+                    reactToStory(currentStory.id, emoji).catch(() => {});
+                  });
+                }}
+                className="text-2xl transition-transform hover:scale-125 active:scale-90"
+                aria-label={`React with ${emoji}`}
+              >
+                {emoji}
+              </button>
+            ))}
+          </div>
+        )}
+
+        <style>{`
+          @keyframes emojiFloat {
+            0% { opacity: 1; transform: translate(-50%, 0) scale(1); }
+            100% { opacity: 0; transform: translate(-50%, -120px) scale(1.5); }
+          }
+        `}</style>
       </div>
 
       {/* Left / Right navigation hints (for larger screens) */}
@@ -290,4 +396,13 @@ function timeAgo(dateStr: string): string {
   if (minutes < 60) return `${minutes}m ago`;
   const hours = Math.floor(minutes / 60);
   return `${hours}h ago`;
+}
+
+function timeLeft(expiresAt: string): string {
+  const remaining = new Date(expiresAt).getTime() - Date.now();
+  if (remaining <= 0) return "expired";
+  const hours = Math.floor(remaining / (1000 * 60 * 60));
+  const minutes = Math.floor((remaining % (1000 * 60 * 60)) / (1000 * 60));
+  if (hours > 0) return `${hours}h ${minutes}m left`;
+  return `${minutes}m left`;
 }

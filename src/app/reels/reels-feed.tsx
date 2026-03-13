@@ -57,6 +57,7 @@ function ReelItem({
     if (!video) return;
 
     if (isActive) {
+      video.currentTime = 0;
       video.play().catch(() => {});
       setIsPlaying(true);
     } else {
@@ -81,7 +82,6 @@ function ReelItem({
           });
         });
       } else if (liked) {
-        // Already liked, just show animation
         setShowHeart(true);
         setTimeout(() => setShowHeart(false), 800);
       }
@@ -92,7 +92,7 @@ function ReelItem({
 
     // Single tap: play/pause after a small delay
     setTimeout(() => {
-      if (lastTapRef.current !== now) return; // double tap happened
+      if (lastTapRef.current !== now) return;
       const video = videoRef.current;
       if (!video) return;
       if (video.paused) {
@@ -147,17 +147,19 @@ function ReelItem({
   }, [reel.id]);
 
   return (
-    <div className="relative h-full w-full snap-start flex-shrink-0 bg-black">
-      {/* Video */}
-      <video
-        ref={videoRef}
-        src={reel.image_url}
-        className="absolute inset-0 h-full w-full object-cover"
-        loop
-        muted
-        playsInline
-        preload={isActive ? "auto" : "metadata"}
-      />
+    <div className="relative h-full w-full bg-black">
+      {/* 9:16 video container - centered */}
+      <div className="absolute inset-0 flex items-center justify-center">
+        <video
+          ref={videoRef}
+          src={reel.image_url}
+          className="h-full w-full object-contain"
+          loop
+          muted
+          playsInline
+          preload={isActive ? "auto" : "metadata"}
+        />
+      </div>
 
       {/* Tap area */}
       <div
@@ -192,15 +194,15 @@ function ReelItem({
         </div>
       )}
 
-      {/* Right side action buttons */}
-      <div className="absolute bottom-32 right-3 z-30 flex flex-col items-center gap-5">
+      {/* Right side action buttons - fixed overlay */}
+      <div className="absolute bottom-24 right-3 z-30 flex flex-col items-center gap-5 sm:bottom-8">
         {/* Like */}
         <button onClick={handleLike} className="flex flex-col items-center gap-1">
-          <div className="rounded-full bg-black/20 p-2 backdrop-blur-sm">
+          <div className="rounded-full bg-black/30 p-2.5 backdrop-blur-sm">
             <svg
               xmlns="http://www.w3.org/2000/svg"
-              width="28"
-              height="28"
+              width="26"
+              height="26"
               viewBox="0 0 24 24"
               fill={liked ? "#ef4444" : "none"}
               stroke={liked ? "#ef4444" : "white"}
@@ -217,11 +219,11 @@ function ReelItem({
 
         {/* Comment */}
         <Link href={`/post/${reel.id}`} className="flex flex-col items-center gap-1">
-          <div className="rounded-full bg-black/20 p-2 backdrop-blur-sm">
+          <div className="rounded-full bg-black/30 p-2.5 backdrop-blur-sm">
             <svg
               xmlns="http://www.w3.org/2000/svg"
-              width="28"
-              height="28"
+              width="26"
+              height="26"
               viewBox="0 0 24 24"
               fill="none"
               stroke="white"
@@ -237,11 +239,11 @@ function ReelItem({
 
         {/* Share */}
         <button onClick={handleShare} className="flex flex-col items-center gap-1">
-          <div className="rounded-full bg-black/20 p-2 backdrop-blur-sm">
+          <div className="rounded-full bg-black/30 p-2.5 backdrop-blur-sm">
             <svg
               xmlns="http://www.w3.org/2000/svg"
-              width="28"
-              height="28"
+              width="26"
+              height="26"
               viewBox="0 0 24 24"
               fill="none"
               stroke="white"
@@ -258,11 +260,11 @@ function ReelItem({
 
         {/* Bookmark */}
         <button onClick={handleSave} className="flex flex-col items-center gap-1">
-          <div className="rounded-full bg-black/20 p-2 backdrop-blur-sm">
+          <div className="rounded-full bg-black/30 p-2.5 backdrop-blur-sm">
             <svg
               xmlns="http://www.w3.org/2000/svg"
-              width="28"
-              height="28"
+              width="26"
+              height="26"
               viewBox="0 0 24 24"
               fill={saved ? "white" : "none"}
               stroke="white"
@@ -276,29 +278,33 @@ function ReelItem({
           </div>
           <span className="text-xs font-semibold text-white drop-shadow">Save</span>
         </button>
+
+        {/* Profile avatar */}
+        <Link href={`/profile/${reel.user.id}`} className="flex flex-col items-center gap-1">
+          {reel.user.avatar_url ? (
+            <img
+              src={reel.user.avatar_url}
+              alt={reel.user.username}
+              className="h-10 w-10 rounded-full border-2 border-white object-cover"
+            />
+          ) : (
+            <div className="flex h-10 w-10 items-center justify-center rounded-full border-2 border-white bg-white/20 text-sm font-bold text-white">
+              {reel.user.username.charAt(0).toUpperCase()}
+            </div>
+          )}
+        </Link>
       </div>
 
-      {/* Bottom overlay: user info + caption */}
-      <div className="absolute bottom-0 left-0 right-14 z-30">
-        <div className="bg-gradient-to-t from-black/80 via-black/40 to-transparent px-4 pb-6 pt-20">
+      {/* Bottom overlay: user info + caption - fixed overlay */}
+      <div className="absolute bottom-0 left-0 right-16 z-30 pb-20 sm:pb-4">
+        <div className="bg-gradient-to-t from-black/80 via-black/40 to-transparent px-4 pb-4 pt-20">
           {/* User row */}
           <Link
             href={`/profile/${reel.user.id}`}
             className="mb-2 flex items-center gap-2"
           >
-            {reel.user.avatar_url ? (
-              <img
-                src={reel.user.avatar_url}
-                alt={reel.user.username}
-                className="h-9 w-9 rounded-full border-2 border-white object-cover"
-              />
-            ) : (
-              <div className="flex h-9 w-9 items-center justify-center rounded-full border-2 border-white bg-white/20 text-sm font-bold text-white">
-                {reel.user.username.charAt(0).toUpperCase()}
-              </div>
-            )}
             <span className="text-sm font-bold text-white drop-shadow">
-              {reel.user.username}
+              @{reel.user.username}
             </span>
           </Link>
 
@@ -329,6 +335,29 @@ export function ReelsFeed({ reels, isLoggedIn }: ReelsFeedProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [activeIndex, setActiveIndex] = useState(0);
 
+  // Hide bottom nav and remove main padding on mobile for true fullscreen reels
+  useEffect(() => {
+    const bottomNav = document.querySelector("nav.fixed.bottom-0") as HTMLElement;
+    const mainEl = document.querySelector("main") as HTMLElement;
+    const footer = document.querySelector("footer") as HTMLElement;
+    if (bottomNav) bottomNav.style.display = "none";
+    if (mainEl) {
+      mainEl.style.paddingBottom = "0";
+      mainEl.style.minHeight = "0";
+      mainEl.style.overflow = "hidden";
+    }
+    if (footer) footer.style.display = "none";
+    return () => {
+      if (bottomNav) bottomNav.style.display = "";
+      if (mainEl) {
+        mainEl.style.paddingBottom = "";
+        mainEl.style.minHeight = "";
+        mainEl.style.overflow = "";
+      }
+      if (footer) footer.style.display = "";
+    };
+  }, []);
+
   // IntersectionObserver to track which reel is in view
   useEffect(() => {
     const container = containerRef.current;
@@ -349,7 +378,7 @@ export function ReelsFeed({ reels, isLoggedIn }: ReelsFeedProps) {
       },
       {
         root: container,
-        threshold: 0.6,
+        threshold: 0.7,
       }
     );
 
@@ -361,7 +390,7 @@ export function ReelsFeed({ reels, isLoggedIn }: ReelsFeedProps) {
 
   if (reels.length === 0) {
     return (
-      <div className="flex h-[calc(100vh-4rem)] flex-col items-center justify-center bg-black px-4 text-center">
+      <div className="flex h-[100dvh] flex-col items-center justify-center bg-black px-4 text-center sm:h-[calc(100vh-4rem)]">
         <svg
           xmlns="http://www.w3.org/2000/svg"
           width="56"
@@ -394,15 +423,17 @@ export function ReelsFeed({ reels, isLoggedIn }: ReelsFeedProps) {
   return (
     <div
       ref={containerRef}
-      className="h-[calc(100vh-4rem)] snap-y snap-mandatory overflow-y-scroll bg-black"
-      style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
+      className="reels-container h-[100dvh] snap-y snap-mandatory overflow-y-scroll bg-black sm:h-[calc(100vh-4rem)]"
     >
-      <style>{`div::-webkit-scrollbar { display: none; }`}</style>
+      <style>{`
+        .reels-container::-webkit-scrollbar { display: none; }
+        .reels-container { scrollbar-width: none; -ms-overflow-style: none; }
+      `}</style>
       {reels.map((reel, index) => (
         <div
           key={reel.id}
           data-index={index}
-          className="h-[calc(100vh-4rem)] w-full snap-start"
+          className="h-[100dvh] w-full snap-start snap-always sm:h-[calc(100vh-4rem)]"
         >
           <ReelItem
             reel={reel}

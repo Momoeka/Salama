@@ -196,8 +196,8 @@ export default function ConversationPage() {
 
   return (
     <div className="mx-auto flex h-[calc(100vh-4rem)] max-w-2xl flex-col px-0 sm:px-6 lg:px-8">
-      {/* Header */}
-      <div className="flex items-center gap-3 border-b border-border px-4 py-3">
+      {/* Header - sticky */}
+      <div className="sticky top-0 z-10 flex flex-shrink-0 items-center gap-3 border-b border-border bg-background px-4 py-3">
         <Link
           href="/messages"
           className="rounded-lg p-1.5 text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground sm:hidden"

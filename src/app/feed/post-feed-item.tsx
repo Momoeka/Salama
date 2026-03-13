@@ -11,6 +11,8 @@ import { AuthRequiredModal } from "@/components/auth-required-modal";
 import { VerifiedBadge } from "@/components/verified-badge";
 import { PollCard } from "@/components/poll-card";
 import type { PollData } from "@/app/actions/polls";
+import { togglePinPost } from "@/app/actions/pinned-posts";
+import { SaveToCollectionModal } from "@/components/save-to-collection-modal";
 
 interface Comment {
   id: string;
@@ -79,6 +81,7 @@ export function PostFeedItem({ post, poll, isLoggedIn = true }: PostFeedItemProp
   const [likeAnimating, setLikeAnimating] = useState(false);
   const [authModalOpen, setAuthModalOpen] = useState(false);
   const [authAction, setAuthAction] = useState("continue");
+  const [collectionModalOpen, setCollectionModalOpen] = useState(false);
   const [showInlineComments, setShowInlineComments] = useState(false);
   const [visibleCount, setVisibleCount] = useState(5);
   const [showCommentInput, setShowCommentInput] = useState(false);
@@ -387,7 +390,13 @@ export function PostFeedItem({ post, poll, isLoggedIn = true }: PostFeedItemProp
         <div className="ml-auto flex items-center gap-0 sm:gap-3">
           {/* Bookmark / Save */}
           <button
-            onClick={() => requireAuth("save posts", handleSave)}
+            onClick={() => {
+              if (saved) {
+                requireAuth("save posts", handleSave);
+              } else {
+                requireAuth("save posts", () => setCollectionModalOpen(true));
+              }
+            }}
             className="group flex min-h-[44px] min-w-[44px] items-center justify-center transition-transform active:scale-90"
             aria-label={saved ? "Unsave" : "Save"}
           >
@@ -455,6 +464,19 @@ export function PostFeedItem({ post, poll, isLoggedIn = true }: PostFeedItemProp
                   onClick={() => setMoreMenuOpen(false)}
                 />
                 <div className="absolute right-0 top-8 z-50 w-44 rounded-xl border border-border bg-card py-1 shadow-lg">
+                  <button
+                    onClick={() => {
+                      setMoreMenuOpen(false);
+                      startTransition(() => togglePinPost(post.id).catch(() => {}));
+                    }}
+                    className="flex w-full items-center gap-2 px-4 py-2.5 text-sm text-foreground hover:bg-secondary transition-colors"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <line x1="12" x2="12" y1="17" y2="22" />
+                      <path d="M5 17h14v-1.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V6h1a2 2 0 0 0 0-4H8a2 2 0 0 0 0 4h1v4.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24Z" />
+                    </svg>
+                    Pin to profile
+                  </button>
                   <button
                     onClick={() => {
                       setMoreMenuOpen(false);
@@ -681,6 +703,16 @@ export function PostFeedItem({ post, poll, isLoggedIn = true }: PostFeedItemProp
         isOpen={authModalOpen}
         onClose={() => setAuthModalOpen(false)}
         action={authAction}
+      />
+
+      {/* Save to Collection Modal */}
+      <SaveToCollectionModal
+        isOpen={collectionModalOpen}
+        onClose={() => {
+          setCollectionModalOpen(false);
+          setSaved(true);
+        }}
+        postId={post.id}
       />
 
       {/* Inline keyframe for heart animation */}

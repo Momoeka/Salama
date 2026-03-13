@@ -8,6 +8,7 @@ import { processPostWithAI } from "@/lib/ai-pipeline";
 import { moderateContent, moderateImage } from "@/lib/content-moderation";
 import { createPoll } from "@/app/actions/polls";
 import { savePostHashtags } from "@/app/actions/hashtags";
+import { addCollaborator } from "@/app/actions/collaborations";
 
 export async function uploadPost(formData: FormData) {
   const { userId } = await auth();
@@ -24,6 +25,8 @@ export async function uploadPost(formData: FormData) {
     "published";
   const scheduledAt = formData.get("scheduled_at") as string | null;
   const locationName = (formData.get("location_name") as string) || null;
+  const altText = (formData.get("alt_text") as string) || null;
+  const collaboratorIdInput = formData.get("collaborator_id") as string | null;
   const pollQuestion = formData.get("poll_question") as string | null;
   const pollOptionsRaw = formData.get("poll_options") as string | null;
 
@@ -73,6 +76,7 @@ export async function uploadPost(formData: FormData) {
     media_type: mediaType,
     status,
     location_name: locationName,
+    alt_text: altText,
   };
 
   if (status === "scheduled" && scheduledAt) {
@@ -106,6 +110,11 @@ export async function uploadPost(formData: FormData) {
   // Save hashtags from caption
   if (newPost?.id) {
     savePostHashtags(newPost.id, caption).catch(() => {});
+  }
+
+  // Add collaborator if specified
+  if (newPost?.id && collaboratorIdInput) {
+    addCollaborator(newPost.id, collaboratorIdInput).catch(() => {});
   }
 
   // Trigger AI pipeline in background (non-blocking) only for published posts

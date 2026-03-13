@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import {
   ClerkProvider,
@@ -12,6 +12,8 @@ import Link from "next/link";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { UserMenu } from "@/components/user-menu";
 import { StreamChatWrapper } from "@/components/stream-chat-wrapper";
+import { PWAInstall } from "@/components/pwa-install";
+import { NotificationPrompt } from "@/components/notification-prompt";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -28,6 +30,20 @@ export const metadata: Metadata = {
   title: "SALAMA - Share Your World",
   description:
     "A modern image gallery and social platform powered by AI. Upload, discover, and connect.",
+  manifest: "/manifest.json",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "black-translucent",
+    title: "SALAMA",
+  },
+  icons: {
+    icon: "/icons/icon-192.svg",
+    apple: "/icons/icon-192.svg",
+  },
+};
+
+export const viewport: Viewport = {
+  themeColor: "#6366f1",
 };
 
 export default function RootLayout({
@@ -37,11 +53,22 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className="dark" suppressHydrationWarning>
+      <head>
+        <meta name="apple-mobile-web-app-capable" content="yes" />
+        <meta name="mobile-web-app-capable" content="yes" />
+      </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
+        <PWAInstall />
+        <a
+          href="#main-content"
+          className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[100] focus:rounded-lg focus:bg-primary focus:px-4 focus:py-2 focus:text-primary-foreground"
+        >
+          Skip to main content
+        </a>
         <ClerkProvider appearance={{ baseTheme: dark }}>
-          <nav className="sticky top-0 z-50 border-b border-border/50 bg-background/80 backdrop-blur-xl">
+          <nav aria-label="Main navigation" className="relative sm:sticky sm:top-0 z-50 border-b border-border/50 bg-background/80 backdrop-blur-xl">
             <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
               {/* Logo */}
               <Link href="/" className="group flex items-center gap-2.5">
@@ -103,6 +130,12 @@ export default function RootLayout({
                     className="rounded-lg px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
                   >
                     Search
+                  </Link>
+                  <Link
+                    href="/reels"
+                    className="rounded-lg px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
+                  >
+                    Reels
                   </Link>
                   <Link
                     href="/upload"
@@ -234,8 +267,9 @@ export default function RootLayout({
           </Show>
 
           <StreamChatWrapper>
-          <main className="min-h-[calc(100vh-4rem)] pb-20 sm:pb-0">{children}</main>
+          <main id="main-content" className="min-h-[calc(100vh-4rem)] pb-20 sm:pb-0">{children}</main>
           </StreamChatWrapper>
+          <NotificationPrompt />
 
           {/* Footer (hidden on mobile where bottom nav is shown) */}
           <footer className="hidden border-t border-border/50 bg-background/50 py-10 sm:block">

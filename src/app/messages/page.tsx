@@ -27,6 +27,11 @@ export default function MessagesPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<any[]>([]);
   const [showSearch, setShowSearch] = useState(false);
+  const [showGroupCreate, setShowGroupCreate] = useState(false);
+  const [groupName, setGroupName] = useState("");
+  const [groupMembers, setGroupMembers] = useState<any[]>([]);
+  const [groupSearch, setGroupSearch] = useState("");
+  const [groupSearchResults, setGroupSearchResults] = useState<any[]>([]);
 
   useEffect(() => {
     if (!client || !userId || !isReady) return;
@@ -102,6 +107,45 @@ export default function MessagesPage() {
     }
   }
 
+  async function handleGroupSearch(query: string) {
+    setGroupSearch(query);
+    if (!query.trim()) { setGroupSearchResults([]); return; }
+    try {
+      const res = await fetch(`/api/search-users?q=${encodeURIComponent(query)}`);
+      if (res.ok) {
+        const data = await res.json();
+        setGroupSearchResults((data.users || []).filter(
+          (u: any) => !groupMembers.some((m) => m.id === u.id)
+        ));
+      }
+    } catch { setGroupSearchResults([]); }
+  }
+
+  async function createGroup() {
+    if (!client || !userId || !groupName.trim() || groupMembers.length < 1) return;
+    try {
+      // Upsert all members in Stream
+      await Promise.all(
+        groupMembers.map((m) =>
+          fetch("/api/stream-upsert-user", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ id: m.id, name: m.username, image: m.avatar_url }),
+          })
+        )
+      );
+      const memberIds = [userId, ...groupMembers.map((m: any) => m.id)];
+      const channel = client.channel("messaging", `group-${Date.now()}`, {
+        name: groupName.trim(),
+        members: memberIds,
+      } as any);
+      await channel.watch();
+      window.location.href = `/messages/${channel.id}`;
+    } catch (err) {
+      console.error("Failed to create group:", err);
+    }
+  }
+
   if (!isReady) {
     return (
       <div className="mx-auto max-w-2xl px-2 py-4 sm:px-6 sm:py-8 lg:px-8">
@@ -127,12 +171,20 @@ export default function MessagesPage() {
     <div className="mx-auto max-w-2xl px-2 py-4 sm:px-6 sm:py-8 lg:px-8">
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-bold text-foreground">Messages</h1>
-        <button
-          onClick={() => setShowSearch(!showSearch)}
-          className="rounded-xl bg-gradient-to-r from-violet-600 to-purple-600 px-4 py-2 text-sm font-medium text-white shadow-md transition-all hover:shadow-lg hover:opacity-90"
-        >
-          + New Chat
-        </button>
+        <div className="flex gap-2">
+          <button
+            onClick={() => { setShowGroupCreate(!showGroupCreate); setShowSearch(false); }}
+            className="rounded-xl border border-violet-600 px-4 py-2 text-sm font-medium text-violet-400 transition-all hover:bg-violet-600/10"
+          >
+            + Group
+          </button>
+          <button
+            onClick={() => { setShowSearch(!showSearch); setShowGroupCreate(false); }}
+            className="rounded-xl bg-gradient-to-r from-violet-600 to-purple-600 px-4 py-2 text-sm font-medium text-white shadow-md transition-all hover:shadow-lg hover:opacity-90"
+          >
+            + New Chat
+          </button>
+        </div>
       </div>
 
       {/* Search for new conversation */}
@@ -169,6 +221,68 @@ export default function MessagesPage() {
         </div>
       )}
 
+      {/* Group creation */}
+      {showGroupCreate && (
+        <div className="mb-4 rounded-xl border border-border bg-card p-4">
+          <input
+            type="text"
+            placeholder="Group name..."
+            value={groupName}
+            onChange={(e) => setGroupName(e.target.value)}
+            className="mb-3 w-full rounded-lg border border-border bg-secondary px-4 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus:border-violet-500 focus:outline-none focus:ring-1 focus:ring-violet-500"
+            autoFocus
+          />
+          {groupMembers.length > 0 && (
+            <div className="mb-3 flex flex-wrap gap-2">
+              {groupMembers.map((m: any) => (
+                <span key={m.id} className="flex items-center gap-1 rounded-full bg-violet-600/20 px-3 py-1 text-xs font-medium text-violet-400">
+                  {m.username}
+                  <button onClick={() => setGroupMembers((prev) => prev.filter((p) => p.id !== m.id))} className="ml-1 hover:text-white">&times;</button>
+                </span>
+              ))}
+            </div>
+          )}
+          <input
+            type="text"
+            placeholder="Search members to add..."
+            value={groupSearch}
+            onChange={(e) => handleGroupSearch(e.target.value)}
+            className="w-full rounded-lg border border-border bg-secondary px-4 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus:border-violet-500 focus:outline-none focus:ring-1 focus:ring-violet-500"
+          />
+          {groupSearchResults.length > 0 && (
+            <div className="mt-2 space-y-1">
+              {groupSearchResults.map((user: any) => (
+                <button
+                  key={user.id}
+                  onClick={() => {
+                    setGroupMembers((prev) => [...prev, user]);
+                    setGroupSearch("");
+                    setGroupSearchResults([]);
+                  }}
+                  className="flex w-full items-center gap-3 rounded-lg p-2 text-left transition-colors hover:bg-secondary"
+                >
+                  {user.avatar_url ? (
+                    <img src={user.avatar_url} alt="" className="h-8 w-8 rounded-full object-cover" />
+                  ) : (
+                    <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-violet-600 to-purple-600 text-xs font-bold text-white">
+                      {user.username?.[0]?.toUpperCase()}
+                    </div>
+                  )}
+                  <span className="text-sm text-foreground">{user.username}</span>
+                </button>
+              ))}
+            </div>
+          )}
+          <button
+            onClick={createGroup}
+            disabled={!groupName.trim() || groupMembers.length < 1}
+            className="mt-3 w-full rounded-lg bg-gradient-to-r from-violet-600 to-purple-600 py-2.5 text-sm font-medium text-white disabled:opacity-50"
+          >
+            Create Group ({groupMembers.length + 1} members)
+          </button>
+        </div>
+      )}
+
       {loading ? (
         <div className="space-y-3">
           {[...Array(5)].map((_, i) => (
@@ -197,6 +311,10 @@ export default function MessagesPage() {
             const otherMembers = Object.values(channel.state.members).filter(
               (m) => m.user_id !== userId
             );
+            const isGroup = otherMembers.length > 1 || (channel.data as any)?.name;
+            const channelName = isGroup
+              ? ((channel.data as any)?.name as string) || otherMembers.map((m) => m.user?.name).join(", ")
+              : (otherMembers[0]?.user?.name as string) || "Unknown";
             const otherUser = otherMembers[0]?.user;
             const lastMessage = channel.state.messages[channel.state.messages.length - 1];
             const unreadCount = channel.countUnread();
@@ -207,7 +325,21 @@ export default function MessagesPage() {
                 href={`/messages/${channel.id}`}
                 className="flex items-center gap-3 rounded-xl p-3 transition-colors hover:bg-secondary"
               >
-                {otherUser?.image ? (
+                {isGroup ? (
+                  <div className="relative flex h-12 w-12 flex-shrink-0 items-center justify-center">
+                    {otherMembers.slice(0, 2).map((m, i) => (
+                      <div key={m.user_id} className={`absolute ${i === 0 ? "left-0 top-0" : "bottom-0 right-0"} h-8 w-8`}>
+                        {m.user?.image ? (
+                          <img src={m.user.image as string} alt="" className="h-8 w-8 rounded-full border-2 border-background object-cover" />
+                        ) : (
+                          <div className="flex h-8 w-8 items-center justify-center rounded-full border-2 border-background bg-gradient-to-br from-violet-600 to-purple-600 text-[10px] font-bold text-white">
+                            {(m.user?.name as string)?.[0]?.toUpperCase() || "?"}
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                ) : otherUser?.image ? (
                   <img src={otherUser.image as string} alt={otherUser.name || ""} className="h-12 w-12 flex-shrink-0 rounded-full object-cover" />
                 ) : (
                   <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-violet-600 to-purple-600 text-sm font-bold text-white">
@@ -218,7 +350,7 @@ export default function MessagesPage() {
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center justify-between">
                     <span className="text-sm font-semibold text-foreground">
-                      {(otherUser?.name as string) || "Unknown"}
+                      {channelName}
                     </span>
                     {lastMessage && (
                       <span className="text-xs text-muted-foreground">
@@ -229,7 +361,7 @@ export default function MessagesPage() {
                   <div className="flex items-center gap-2">
                     <p className={`truncate text-sm ${unreadCount > 0 ? "font-medium text-foreground" : "text-muted-foreground"}`}>
                       {lastMessage
-                        ? `${lastMessage.user?.id === userId ? "You: " : ""}${lastMessage.text || (lastMessage.attachments?.length ? "Sent an attachment" : "No messages yet")}`
+                        ? `${lastMessage.user?.id === userId ? "You: " : isGroup ? `${lastMessage.user?.name}: ` : ""}${lastMessage.text || (lastMessage.attachments?.length ? "Sent an attachment" : "No messages yet")}`
                         : "No messages yet"}
                     </p>
                     {unreadCount > 0 && (

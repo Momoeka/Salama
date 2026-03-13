@@ -3,12 +3,14 @@
 import { useState, useRef } from "react";
 import { createStory, type UserWithStories } from "@/app/actions/stories";
 import { StoryViewer } from "./story-viewer";
+import { compressImage } from "@/lib/image-compress";
 
 interface StoriesBarProps {
   storiesData: UserWithStories[];
+  currentUserId?: string;
 }
 
-export function StoriesBar({ storiesData }: StoriesBarProps) {
+export function StoriesBar({ storiesData, currentUserId }: StoriesBarProps) {
   const [stories, setStories] = useState<UserWithStories[]>(storiesData);
   const [viewerOpen, setViewerOpen] = useState(false);
   const [activeUserIndex, setActiveUserIndex] = useState(0);
@@ -31,8 +33,9 @@ export function StoriesBar({ storiesData }: StoriesBarProps) {
 
     setUploading(true);
     try {
+      const compressed = await compressImage(file);
       const formData = new FormData();
-      formData.append("media", file);
+      formData.append("media", compressed);
       formData.append("caption", "");
       await createStory(formData);
       // Refresh the page to get updated stories
@@ -146,6 +149,7 @@ export function StoriesBar({ storiesData }: StoriesBarProps) {
         <StoryViewer
           allUserStories={stories}
           initialUserIndex={activeUserIndex}
+          currentUserId={currentUserId}
           onClose={() => setViewerOpen(false)}
         />
       )}

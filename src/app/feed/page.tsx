@@ -6,12 +6,13 @@ import { getOrCreateUser } from "@/lib/user";
 import { rankPosts, getUserInteractionScores } from "@/lib/feed-ranking";
 import { getPollForPost } from "@/app/actions/polls";
 import type { PollData } from "@/app/actions/polls";
-import { PostFeedItem } from "./post-feed-item";
+import { InfiniteFeed } from "@/components/infinite-feed";
+import { getSuggestedUsers } from "@/app/actions/suggestions";
 
 export const dynamic = "force-dynamic";
 
 export default async function FeedPage() {
-  const [user, { data: posts }, storiesData] = await Promise.all([
+  const [user, { data: posts }, storiesData, suggestedUsers] = await Promise.all([
     getOrCreateUser(),
     supabaseAdmin
       .from("posts")
@@ -22,13 +23,12 @@ export default async function FeedPage() {
     `
       )
       .eq("visibility", "public")
-      .or("status.eq.published,status.is.null")
       .order("created_at", { ascending: false })
-      .limit(20),
+      .limit(10),
     getActiveStories(),
+    getSuggestedUsers(5).catch(() => []),
   ]);
 
-  // For each post, fetch like count, comment count, user liked status, and recent comments in parallel
   const enrichedPosts = posts
     ? await Promise.all(
         posts.map(async (post: any) => {
@@ -132,11 +132,9 @@ export default async function FeedPage() {
         })),
         interactions
       );
-      // Re-order enrichedPosts based on ranking
       const postMap = new Map(enrichedPosts.map((p) => [p.id, p]));
       rankedPosts = ranked.map((r) => postMap.get(r.id)!).filter(Boolean);
     } catch {
-      // Fallback to chronological if ranking fails
       rankedPosts = enrichedPosts;
     }
   }
@@ -145,7 +143,7 @@ export default async function FeedPage() {
     <div className="mx-auto max-w-xl pb-8">
       {/* Stories Bar */}
       <div className="px-0 pt-6 sm:px-4">
-        <StoriesBar storiesData={storiesData} />
+        <StoriesBar storiesData={storiesData} currentUserId={user?.id} />
       </div>
 
       {!rankedPosts || rankedPosts.length === 0 ? (
@@ -161,6 +159,7 @@ export default async function FeedPage() {
             strokeLinecap="round"
             strokeLinejoin="round"
             className="mx-auto mb-4 text-muted-foreground"
+            aria-hidden="true"
           >
             <rect width="18" height="18" x="3" y="3" rx="2" ry="2" />
             <circle cx="9" cy="9" r="2" />
@@ -180,11 +179,7 @@ export default async function FeedPage() {
           </Link>
         </div>
       ) : (
-        <div className="flex flex-col">
-          {rankedPosts.map((post) => (
-            <PostFeedItem key={post.id} post={post} poll={post.poll} isLoggedIn={!!user} />
-          ))}
-        </div>
+        <InfiniteFeed initialPosts={rankedPosts} isLoggedIn={!!user} suggestedUsers={suggestedUsers} />
       )}
     </div>
   );

@@ -5,6 +5,7 @@ import { supabaseAdmin } from "@/lib/supabase-admin";
 import { getOrCreateUser } from "@/lib/user";
 import { revalidatePath } from "next/cache";
 import { sendNotificationEmail } from "@/lib/email";
+import { notifyLike, notifyComment, notifyFollow } from "@/lib/send-notification";
 
 // ==================== LIKES ====================
 
@@ -63,6 +64,9 @@ export async function toggleLike(postId: string) {
           `${user.username} liked your post`
         ).catch(() => {});
       }
+
+      // Push notification (non-blocking)
+      notifyLike(post.user_id, user.username, postId).catch(() => {});
     }
   }
 
@@ -134,6 +138,9 @@ export async function addComment(postId: string, content: string) {
         `${user.username} commented on your post`
       ).catch(() => {});
     }
+
+    // Push notification (non-blocking)
+    notifyComment(post.user_id, user.username, postId).catch(() => {});
   }
 
   revalidatePath(`/post/${postId}`);
@@ -213,6 +220,9 @@ export async function toggleFollow(targetUserId: string) {
         `${user.username} started following you`
       ).catch(() => {});
     }
+
+    // Push notification (non-blocking)
+    notifyFollow(targetUserId, user.username).catch(() => {});
   }
 
   revalidatePath(`/profile/${targetUserId}`);
