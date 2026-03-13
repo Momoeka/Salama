@@ -10,6 +10,7 @@ import {
 import { dark } from "@clerk/themes";
 import Link from "next/link";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { UserMenu } from "@/components/user-menu";
 import { StreamChatWrapper } from "@/components/stream-chat-wrapper";
 import "./globals.css";
 
@@ -104,29 +105,6 @@ export default function RootLayout({
                     Search
                   </Link>
                   <Link
-                    href="/analytics"
-                    className="rounded-lg px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
-                  >
-                    <span className="flex items-center gap-1.5">
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        width="16"
-                        height="16"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      >
-                        <line x1="18" y1="20" x2="18" y2="10" />
-                        <line x1="12" y1="20" x2="12" y2="4" />
-                        <line x1="6" y1="20" x2="6" y2="14" />
-                      </svg>
-                      Analytics
-                    </span>
-                  </Link>
-                  <Link
                     href="/upload"
                     className="rounded-xl bg-gradient-to-r from-[var(--gradient-start)] to-[var(--gradient-end)] px-4 py-2 text-sm font-medium text-primary-foreground shadow-md transition-all hover:shadow-lg hover:opacity-90 hover:scale-[1.02]"
                   >
@@ -188,33 +166,7 @@ export default function RootLayout({
                       <path d="M10.3 21a1.94 1.94 0 0 0 3.4 0" />
                     </svg>
                   </Link>
-                  <Link
-                    href="/profile"
-                    className="rounded-lg p-2 text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
-                  >
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      width="20"
-                      height="20"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    >
-                      <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" />
-                      <circle cx="12" cy="7" r="4" />
-                    </svg>
-                  </Link>
-                  <ThemeToggle />
-                  <UserButton
-                    appearance={{
-                      elements: {
-                        avatarBox: "h-8 w-8",
-                      },
-                    }}
-                  />
+                  <UserMenu />
                 </Show>
               </div>
             </div>
