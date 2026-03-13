@@ -270,11 +270,11 @@ export function PostFeedItem({ post }: PostFeedItemProps) {
             </svg>
           </button>
 
-          {/* Share */}
-          <button
-            onClick={() => setShareOpen(true)}
+          {/* DM */}
+          <Link
+            href={`/messages/NEW?user=${post.user.id}`}
             className="group transition-transform active:scale-90"
-            aria-label="Share"
+            aria-label="Message"
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -290,6 +290,30 @@ export function PostFeedItem({ post }: PostFeedItemProps) {
             >
               <line x1="22" x2="11" y1="2" y2="13" />
               <polygon points="22 2 15 22 11 13 2 9 22 2" />
+            </svg>
+          </Link>
+
+          {/* Share */}
+          <button
+            onClick={() => setShareOpen(true)}
+            className="group transition-transform active:scale-90"
+            aria-label="Share"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="22"
+              height="22"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              className="text-foreground transition-all group-hover:scale-110 group-hover:text-primary"
+            >
+              <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8" />
+              <polyline points="16 6 12 2 8 6" />
+              <line x1="12" x2="12" y1="2" y2="15" />
             </svg>
           </button>
         </div>
