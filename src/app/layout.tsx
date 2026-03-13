@@ -9,6 +9,7 @@ import {
 } from "@clerk/nextjs";
 import { dark } from "@clerk/themes";
 import Link from "next/link";
+import { ThemeToggle } from "@/components/theme-toggle";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -33,7 +34,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" className="dark" suppressHydrationWarning>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
@@ -83,6 +84,7 @@ export default function RootLayout({
               {/* Auth */}
               <div className="flex items-center gap-3">
                 <Show when="signed-out">
+                  <ThemeToggle />
                   <SignInButton mode="modal">
                     <button className="rounded-lg px-4 py-2 text-sm text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground">
                       Sign In
@@ -151,6 +153,7 @@ export default function RootLayout({
                       <circle cx="12" cy="7" r="4" />
                     </svg>
                   </Link>
+                  <ThemeToggle />
                   <UserButton
                     appearance={{
                       elements: {

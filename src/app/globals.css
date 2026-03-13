@@ -1,6 +1,27 @@
 @import "tailwindcss";
 
 :root {
+  --background: #ffffff;
+  --foreground: #1a1a2e;
+  --card: #f8f8fc;
+  --card-foreground: #1a1a2e;
+  --primary: #7c3aed;
+  --primary-foreground: #ffffff;
+  --secondary: #f0f0f5;
+  --secondary-foreground: #1a1a2e;
+  --muted: #e8e8f0;
+  --muted-foreground: #6b6b80;
+  --accent: #8b5cf6;
+  --border: #e2e2ea;
+  --ring: #7c3aed;
+  --destructive: #ef4444;
+  --success: #10b981;
+  --gradient-start: #7c3aed;
+  --gradient-mid: #ec4899;
+  --gradient-end: #f97316;
+}
+
+html.dark {
   --background: #121218;
   --foreground: #e8e8ed;
   --card: #1a1a22;
@@ -56,13 +77,19 @@ body {
 .scrollbar-hide::-webkit-scrollbar { display: none; }
 .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
 
-html { scroll-behavior: smooth; overflow-x: hidden; }
+html { scroll-behavior: smooth; overflow-x: hidden; transition-property: color, background-color, border-color; transition-duration: 200ms; }
+body { transition-property: color, background-color, border-color; transition-duration: 200ms; }
 
 /* Glass effect */
 .glass {
-  background: rgba(15, 15, 19, 0.6);
+  background: rgba(248, 248, 252, 0.7);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+html.dark .glass {
+  background: rgba(15, 15, 19, 0.6);
   border: 1px solid rgba(255, 255, 255, 0.05);
 }
 
@@ -158,4 +185,11 @@ html { scroll-behavior: smooth; overflow-x: hidden; }
 ::selection {
   background: rgba(139, 92, 246, 0.3);
   color: #fff;
+}
+
+/* Light mode shimmer */
+:root .animate-shimmer {
+  background: linear-gradient(90deg, var(--secondary) 25%, #e8e8f0 50%, var(--secondary) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s ease-in-out infinite;
 }

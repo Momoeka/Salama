@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState, useRef, useTransition } from "react";
 import Link from "next/link";
-import { toggleLike } from "@/app/actions/social";
+import { toggleLike, addComment } from "@/app/actions/social";
 import { toggleSavePost } from "@/app/actions/saved";
 import { ShareDialog } from "@/components/share-dialog";
 import { ReportModal } from "@/components/report-modal";
@@ -72,6 +72,11 @@ export function PostFeedItem({ post, isLoggedIn = true }: PostFeedItemProps) {
   const [likeAnimating, setLikeAnimating] = useState(false);
   const [authModalOpen, setAuthModalOpen] = useState(false);
   const [authAction, setAuthAction] = useState("continue");
+  const [showInlineComments, setShowInlineComments] = useState(false);
+  const [visibleCount, setVisibleCount] = useState(5);
+  const [showCommentInput, setShowCommentInput] = useState(false);
+  const [inlineCommentText, setInlineCommentText] = useState("");
+  const inlineInputRef = useRef<HTMLInputElement>(null);
   const [isPending, startTransition] = useTransition();
   const isVideo = post.media_type === "video";
 
@@ -104,7 +109,38 @@ export function PostFeedItem({ post, isLoggedIn = true }: PostFeedItemProps) {
   }
 
   function handleCommentClick() {
-    setCommentPanelOpen(true);
+    // On mobile (<640px) show inline comments; on desktop open the modal
+    if (typeof window !== "undefined" && window.innerWidth < 640) {
+      setShowInlineComments(true);
+    } else {
+      setCommentPanelOpen(true);
+    }
+  }
+
+  function handleInlineCommentSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    if (!inlineCommentText.trim()) return;
+
+    const text = inlineCommentText.trim();
+    setInlineCommentText("");
+
+    const tempComment: Comment = {
+      id: `temp-${Date.now()}`,
+      content: text,
+      created_at: new Date().toISOString(),
+      user: { id: "me", username: "You", avatar_url: null },
+    };
+    setComments((prev) => [...prev, tempComment]);
+    setCommentCount((c) => c + 1);
+
+    startTransition(async () => {
+      try {
+        await addComment(post.id, text);
+      } catch {
+        setComments((prev) => prev.filter((c) => c.id !== tempComment.id));
+        setCommentCount((c) => c - 1);
+      }
+    });
   }
 
   function handleReport() {
@@ -443,7 +479,7 @@ export function PostFeedItem({ post, isLoggedIn = true }: PostFeedItemProps) {
       {/* View all comments */}
       {commentCount > comments.length && (
         <button
-          onClick={() => setCommentPanelOpen(true)}
+          onClick={() => requireAuth("view comments", handleCommentClick)}
           className="px-4 pb-1 text-sm text-muted-foreground hover:text-foreground transition-colors"
         >
           View all {commentCount} comments
@@ -473,7 +509,107 @@ export function PostFeedItem({ post, isLoggedIn = true }: PostFeedItemProps) {
         </time>
       </div>
 
-      {/* Comment Panel */}
+      {/* Mobile inline comments (sm:hidden) */}
+      {showInlineComments && (
+        <div className="border-t border-border bg-secondary/30 sm:hidden">
+          {/* Collapse button */}
+          <div className="flex items-center justify-between px-4 pt-3 pb-2">
+            <p className="text-xs font-medium text-muted-foreground">
+              {commentCount} {commentCount === 1 ? "comment" : "comments"}
+            </p>
+            <button
+              onClick={() => setShowInlineComments(false)}
+              className="text-xs text-muted-foreground hover:text-foreground transition-colors"
+            >
+              Hide
+            </button>
+          </div>
+
+          {/* Comment list */}
+          {comments.length === 0 ? (
+            <div className="px-4 pb-3 text-center">
+              <p className="text-sm text-muted-foreground">No comments yet</p>
+              <p className="text-xs text-muted-foreground">Be the first to comment</p>
+            </div>
+          ) : (
+            <div className="space-y-3 px-4 pb-2">
+              {comments.slice(0, visibleCount).map((comment) => (
+                <div key={comment.id} className="flex items-start gap-2.5">
+                  {comment.user.avatar_url ? (
+                    <img
+                      src={comment.user.avatar_url}
+                      alt={comment.user.username}
+                      className="h-7 w-7 flex-shrink-0 rounded-full object-cover"
+                    />
+                  ) : (
+                    <div className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full bg-muted text-[10px] font-bold text-muted-foreground">
+                      {comment.user.username?.[0]?.toUpperCase() || "?"}
+                    </div>
+                  )}
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-baseline gap-1.5">
+                      <span className="text-sm font-semibold text-foreground">
+                        {comment.user.username}
+                      </span>
+                      <span className="text-[10px] text-muted-foreground">
+                        {timeAgo(comment.created_at)}
+                      </span>
+                    </div>
+                    <p className="break-words text-sm text-foreground/90">
+                      {comment.content}
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Show more button */}
+          {comments.length > visibleCount && (
+            <button
+              onClick={() => setVisibleCount((c) => c + 5)}
+              className="w-full px-4 pb-2 text-left text-xs font-medium text-primary hover:text-primary/80 transition-colors"
+            >
+              Show more comments
+            </button>
+          )}
+
+          {/* Comment input area */}
+          <div className="px-4 pb-3 pt-1">
+            {!showCommentInput ? (
+              <button
+                onClick={() => {
+                  setShowCommentInput(true);
+                  setTimeout(() => inlineInputRef.current?.focus(), 50);
+                }}
+                className="w-full rounded-full bg-muted px-4 py-2 text-left text-sm text-muted-foreground"
+              >
+                Add a comment...
+              </button>
+            ) : (
+              <form onSubmit={handleInlineCommentSubmit} className="flex items-center gap-2">
+                <input
+                  ref={inlineInputRef}
+                  type="text"
+                  placeholder="Add a comment..."
+                  value={inlineCommentText}
+                  onChange={(e) => setInlineCommentText(e.target.value)}
+                  className="flex-1 rounded-full bg-muted px-4 py-2 text-sm text-foreground outline-none placeholder:text-muted-foreground focus:ring-1 focus:ring-primary"
+                />
+                <button
+                  type="submit"
+                  disabled={!inlineCommentText.trim() || isPending}
+                  className="text-sm font-semibold text-primary transition-opacity hover:opacity-70 disabled:opacity-40"
+                >
+                  Post
+                </button>
+              </form>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Comment Panel (opens on desktop only via handleCommentClick logic) */}
       <CommentPanel
         postId={post.id}
         isOpen={commentPanelOpen}
