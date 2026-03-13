@@ -5,6 +5,9 @@ import { supabaseAdmin } from "@/lib/supabase-admin";
 import { getOrCreateUser } from "@/lib/user";
 import { redirect } from "next/navigation";
 import { processPostWithAI } from "@/lib/ai-pipeline";
+import { moderateContent, moderateImage } from "@/lib/content-moderation";
+import { createPoll } from "@/app/actions/polls";
+import { savePostHashtags } from "@/app/actions/hashtags";
 
 export async function uploadPost(formData: FormData) {
   const { userId } = await auth();
@@ -16,9 +19,25 @@ export async function uploadPost(formData: FormData) {
   const file = formData.get("image") as File;
   const caption = formData.get("caption") as string;
   const visibility = (formData.get("visibility") as string) || "public";
+  const status =
+    (formData.get("status") as "published" | "scheduled" | "draft") ||
+    "published";
+  const scheduledAt = formData.get("scheduled_at") as string | null;
+  const locationName = (formData.get("location_name") as string) || null;
+  const pollQuestion = formData.get("poll_question") as string | null;
+  const pollOptionsRaw = formData.get("poll_options") as string | null;
 
   if (!file || !caption) {
     throw new Error("File and caption are required");
+  }
+
+  // AI content moderation — block unsafe captions before creating the post
+  const moderation = await moderateContent(caption);
+  if (!moderation.safe) {
+    throw new Error(
+      moderation.reason ||
+        `Content flagged for: ${moderation.flags.join(", ")}`
+    );
   }
 
   // Detect media type from the file
@@ -46,16 +65,23 @@ export async function uploadPost(formData: FormData) {
     .getPublicUrl(fileName);
 
   // Create the post in the database
-  // Note: requires media_type column on posts table (see posts-video-schema.sql)
+  const insertData: Record<string, unknown> = {
+    user_id: user.id,
+    image_url: urlData.publicUrl,
+    caption,
+    visibility,
+    media_type: mediaType,
+    status,
+    location_name: locationName,
+  };
+
+  if (status === "scheduled" && scheduledAt) {
+    insertData.scheduled_at = scheduledAt;
+  }
+
   const { data: newPost, error: postError } = await supabaseAdmin
     .from("posts")
-    .insert({
-      user_id: user.id,
-      image_url: urlData.publicUrl,
-      caption,
-      visibility,
-      media_type: mediaType,
-    })
+    .insert(insertData)
     .select("id")
     .single();
 
@@ -64,10 +90,47 @@ export async function uploadPost(formData: FormData) {
     throw new Error("Failed to create post");
   }
 
-  // Trigger AI pipeline in background (non-blocking)
-  if (newPost?.id) {
-    processPostWithAI(newPost.id, caption).catch(() => {});
+  // Create poll if poll data was provided
+  if (newPost?.id && pollQuestion && pollOptionsRaw) {
+    try {
+      const pollOptionsArr: string[] = JSON.parse(pollOptionsRaw);
+      if (pollOptionsArr.length >= 2) {
+        await createPoll(newPost.id, pollQuestion, pollOptionsArr);
+      }
+    } catch (pollErr) {
+      console.error("Poll creation error:", pollErr);
+      // Non-fatal: post was created successfully, poll just failed
+    }
   }
 
-  redirect("/feed");
+  // Save hashtags from caption
+  if (newPost?.id) {
+    savePostHashtags(newPost.id, caption).catch(() => {});
+  }
+
+  // Trigger AI pipeline in background (non-blocking) only for published posts
+  if (newPost?.id && status === "published") {
+    processPostWithAI(newPost.id, caption).catch(() => {});
+
+    // Background image moderation — if flagged, hide the post
+    moderateImage(urlData.publicUrl)
+      .then(async (result) => {
+        if (!result.safe) {
+          console.warn(
+            `Image moderation flagged post ${newPost.id}: ${result.reason}`
+          );
+          await supabaseAdmin
+            .from("posts")
+            .update({ visibility: "private" })
+            .eq("id", newPost.id);
+        }
+      })
+      .catch(() => {});
+  }
+
+  if (status === "published") {
+    redirect("/feed");
+  } else {
+    redirect("/profile");
+  }
 }

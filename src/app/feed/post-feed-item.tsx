@@ -8,6 +8,9 @@ import { ShareDialog } from "@/components/share-dialog";
 import { ReportModal } from "@/components/report-modal";
 import { CommentPanel } from "@/components/comment-panel";
 import { AuthRequiredModal } from "@/components/auth-required-modal";
+import { VerifiedBadge } from "@/components/verified-badge";
+import { PollCard } from "@/components/poll-card";
+import type { PollData } from "@/app/actions/polls";
 
 interface Comment {
   id: string;
@@ -26,19 +29,23 @@ export interface PostFeedItemProps {
     image_url: string;
     caption: string;
     media_type?: string;
+    location?: string;
     created_at: string;
     user: {
       id: string;
       username: string;
       avatar_url: string | null;
       clerk_id: string;
+      verified?: boolean;
     };
     likeCount: number;
     commentCount: number;
     hasLiked: boolean;
     hasSaved: boolean;
     recentComments: Comment[];
+    poll?: PollData;
   };
+  poll?: PollData;
   isLoggedIn?: boolean;
 }
 
@@ -59,7 +66,7 @@ function timeAgo(dateString: string): string {
   return date.toLocaleDateString();
 }
 
-export function PostFeedItem({ post, isLoggedIn = true }: PostFeedItemProps) {
+export function PostFeedItem({ post, poll, isLoggedIn = true }: PostFeedItemProps) {
   const [liked, setLiked] = useState(post.hasLiked);
   const [likeCount, setLikeCount] = useState(post.likeCount);
   const [comments, setComments] = useState<Comment[]>(post.recentComments);
@@ -185,12 +192,34 @@ export function PostFeedItem({ post, isLoggedIn = true }: PostFeedItemProps) {
             </div>
           )}
         </Link>
-        <Link
-          href={`/profile/${post.user.id}`}
-          className="text-sm font-semibold text-foreground hover:opacity-70 transition-opacity"
-        >
-          {post.user.username}
-        </Link>
+        <div className="flex flex-col">
+          <Link
+            href={`/profile/${post.user.id}`}
+            className="flex items-center gap-1 text-sm font-semibold text-foreground hover:opacity-70 transition-opacity"
+          >
+            {post.user.username}
+            {post.user.verified && <VerifiedBadge size="xs" />}
+          </Link>
+          {post.location && (
+            <span className="flex items-center gap-1 text-xs text-muted-foreground">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="10"
+                height="10"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z" />
+                <circle cx="12" cy="10" r="3" />
+              </svg>
+              {post.location}
+            </span>
+          )}
+        </div>
         <span className="ml-auto text-xs text-muted-foreground">
           {timeAgo(post.created_at)}
         </span>
@@ -475,6 +504,11 @@ export function PostFeedItem({ post, isLoggedIn = true }: PostFeedItemProps) {
           <span className="text-muted-foreground">{post.caption}</span>
         </p>
       </div>
+
+      {/* Poll */}
+      {(poll || post.poll) && (
+        <PollCard poll={(poll || post.poll)!} isLoggedIn={isLoggedIn} />
+      )}
 
       {/* View all comments */}
       {commentCount > comments.length && (

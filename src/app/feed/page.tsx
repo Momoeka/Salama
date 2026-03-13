@@ -3,6 +3,9 @@ import Link from "next/link";
 import { StoriesBar } from "@/components/stories-bar";
 import { getActiveStories } from "@/app/actions/stories";
 import { getOrCreateUser } from "@/lib/user";
+import { rankPosts, getUserInteractionScores } from "@/lib/feed-ranking";
+import { getPollForPost } from "@/app/actions/polls";
+import type { PollData } from "@/app/actions/polls";
 import { PostFeedItem } from "./post-feed-item";
 
 export const dynamic = "force-dynamic";
@@ -19,6 +22,7 @@ export default async function FeedPage() {
     `
       )
       .eq("visibility", "public")
+      .or("status.eq.published,status.is.null")
       .order("created_at", { ascending: false })
       .limit(20),
     getActiveStories(),
@@ -34,6 +38,7 @@ export default async function FeedPage() {
             { data: userLike },
             { data: recentComments },
             { data: userSaved },
+            pollData,
           ] = await Promise.all([
             supabaseAdmin
               .from("likes")
@@ -72,6 +77,7 @@ export default async function FeedPage() {
                   .eq("user_id", user.id)
                   .maybeSingle()
               : Promise.resolve({ data: null }),
+            getPollForPost(post.id).catch(() => null),
           ]);
 
           return {
@@ -79,6 +85,7 @@ export default async function FeedPage() {
             image_url: post.image_url,
             caption: post.caption || "",
             media_type: post.media_type,
+            location: post.location_name || undefined,
             created_at: post.created_at,
             user: {
               id: post.users?.id || "",
@@ -102,10 +109,37 @@ export default async function FeedPage() {
                   avatar_url: c.users?.avatar_url || null,
                 },
               })),
+            poll: pollData || undefined,
           };
         })
       )
     : [];
+
+  // Apply AI-powered feed ranking if user is logged in
+  let rankedPosts = enrichedPosts;
+  if (user && enrichedPosts.length > 1) {
+    try {
+      const interactions = await getUserInteractionScores(supabaseAdmin, user.id);
+      const ranked = rankPosts(
+        enrichedPosts.map((p) => ({
+          id: p.id,
+          user_id: p.user.id,
+          created_at: p.created_at,
+          likeCount: p.likeCount,
+          commentCount: p.commentCount,
+          hasLiked: p.hasLiked,
+          hasSaved: p.hasSaved,
+        })),
+        interactions
+      );
+      // Re-order enrichedPosts based on ranking
+      const postMap = new Map(enrichedPosts.map((p) => [p.id, p]));
+      rankedPosts = ranked.map((r) => postMap.get(r.id)!).filter(Boolean);
+    } catch {
+      // Fallback to chronological if ranking fails
+      rankedPosts = enrichedPosts;
+    }
+  }
 
   return (
     <div className="mx-auto max-w-xl pb-8">
@@ -114,7 +148,7 @@ export default async function FeedPage() {
         <StoriesBar storiesData={storiesData} />
       </div>
 
-      {!enrichedPosts || enrichedPosts.length === 0 ? (
+      {!rankedPosts || rankedPosts.length === 0 ? (
         <div className="mx-0 rounded-none border border-border bg-card p-12 text-center sm:mx-4 sm:rounded-2xl">
           <svg
             xmlns="http://www.w3.org/2000/svg"
@@ -147,8 +181,8 @@ export default async function FeedPage() {
         </div>
       ) : (
         <div className="flex flex-col">
-          {enrichedPosts.map((post) => (
-            <PostFeedItem key={post.id} post={post} isLoggedIn={!!user} />
+          {rankedPosts.map((post) => (
+            <PostFeedItem key={post.id} post={post} poll={post.poll} isLoggedIn={!!user} />
           ))}
         </div>
       )}

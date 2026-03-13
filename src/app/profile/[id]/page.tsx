@@ -7,6 +7,7 @@ import { isFollowing } from "@/app/actions/social";
 import { isBlocked, isBlockedBy } from "@/app/actions/block";
 import { getOrCreateUser } from "@/lib/user";
 import { ProfileTabs } from "../profile-tabs";
+import { VerifiedBadge } from "@/components/verified-badge";
 
 export const dynamic = "force-dynamic";
 
@@ -81,8 +82,9 @@ export default async function UserProfilePage({
           </div>
         )}
         <div className="flex-1 text-center sm:text-left">
-          <h1 className="mb-1 text-2xl font-bold text-foreground">
+          <h1 className="mb-1 flex items-center justify-center gap-1.5 text-2xl font-bold text-foreground sm:justify-start">
             {profileUser.username}
+            {profileUser.role === "admin" && <VerifiedBadge size="md" />}
           </h1>
           {profileUser.bio && (
             <p className="mb-4 text-sm text-foreground">{profileUser.bio}</p>
