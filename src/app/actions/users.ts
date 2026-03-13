@@ -9,6 +9,18 @@ export async function searchUsers(query: string) {
   const currentUser = await getOrCreateUser();
   if (!currentUser) return [];
 
+  // Get blocked user IDs (both directions)
+  const { data: blocks } = await supabaseAdmin
+    .from("blocks")
+    .select("blocked_id, blocker_id")
+    .or(`blocker_id.eq.${currentUser.id},blocked_id.eq.${currentUser.id}`);
+
+  const blockedIds = new Set<string>();
+  (blocks || []).forEach((b: any) => {
+    if (b.blocker_id === currentUser.id) blockedIds.add(b.blocked_id);
+    if (b.blocked_id === currentUser.id) blockedIds.add(b.blocker_id);
+  });
+
   const { data, error } = await supabaseAdmin
     .from("users")
     .select("id, username, avatar_url")
@@ -21,5 +33,8 @@ export async function searchUsers(query: string) {
     return [];
   }
 
-  return data as { id: string; username: string; avatar_url: string | null }[];
+  // Filter out blocked users
+  return (data || []).filter(
+    (u: any) => !blockedIds.has(u.id)
+  ) as { id: string; username: string; avatar_url: string | null }[];
 }

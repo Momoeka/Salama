@@ -177,7 +177,7 @@ export function ReportModal({
             <button
               onClick={handleSubmit}
               disabled={!category || isPending}
-              className="w-full rounded-xl bg-gradient-to-r from-red-600 to-rose-600 py-3 text-sm font-semibold text-white shadow-md transition-all hover:shadow-lg disabled:opacity-50"
+              className="w-full rounded-xl bg-gradient-to-r from-violet-600 to-purple-600 py-3 text-sm font-semibold text-white shadow-md shadow-purple-500/20 transition-all hover:shadow-lg hover:shadow-purple-500/30 disabled:opacity-50"
             >
               {isPending ? "Submitting..." : "Submit Report"}
             </button>

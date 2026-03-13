@@ -505,14 +505,6 @@ export function PostFeedItem({ post, isLoggedIn = true }: PostFeedItemProps) {
         targetId={post.id}
       />
 
-      {/* Report Modal */}
-      <ReportModal
-        isOpen={reportOpen}
-        onClose={() => setReportOpen(false)}
-        targetType="post"
-        targetId={post.id}
-      />
-
       {/* Auth Required Modal */}
       <AuthRequiredModal
         isOpen={authModalOpen}
