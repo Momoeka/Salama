@@ -7,41 +7,53 @@ export default async function Home() {
   if (userId) redirect("/feed");
 
   return (
-    <div className="relative flex min-h-dvh items-center justify-center overflow-hidden px-4">
-      {/* Ambient background */}
+    <div className="relative flex h-[calc(100dvh-4rem)] items-center justify-center overflow-hidden px-4">
+      {/* Soft ambient background */}
       <div className="pointer-events-none fixed inset-0 overflow-hidden">
-        <div className="absolute top-[15%] left-[20%] h-[45vh] w-[45vh] rounded-full bg-purple-600/[0.07] blur-[140px]" />
-        <div className="absolute right-[15%] bottom-[20%] h-[35vh] w-[35vh] rounded-full bg-pink-500/[0.05] blur-[120px]" />
+        <div className="absolute top-[10%] left-[15%] h-[40vh] w-[40vh] rounded-full bg-[var(--gradient-start)]/[0.06] blur-[140px]" />
+        <div className="absolute right-[10%] bottom-[15%] h-[35vh] w-[35vh] rounded-full bg-[var(--gradient-end)]/[0.05] blur-[120px]" />
       </div>
 
       {/* Centered content */}
-      <div className="relative z-10 flex flex-col items-center gap-8">
-        {/* Rising star logo */}
+      <div className="relative z-10 flex flex-col items-center gap-6 sm:gap-8">
+        {/* Logo mark */}
         <div className="animate-fade-in">
           <svg
-            width="80"
-            height="80"
-            viewBox="0 0 80 80"
+            width="72"
+            height="72"
+            viewBox="0 0 72 72"
             fill="none"
             xmlns="http://www.w3.org/2000/svg"
-            className="h-[60px] w-[60px] sm:h-[80px] sm:w-[80px]"
+            className="h-[56px] w-[56px] sm:h-[72px] sm:w-[72px]"
           >
             <defs>
-              <linearGradient id="starGradient" x1="40" y1="0" x2="40" y2="80" gradientUnits="userSpaceOnUse">
-                <stop offset="0%" stopColor="#8b5cf6" />
-                <stop offset="50%" stopColor="#9333ea" />
-                <stop offset="100%" stopColor="#ec4899" />
+              <linearGradient id="logoGrad" x1="0" y1="0" x2="72" y2="72" gradientUnits="userSpaceOnUse">
+                <stop offset="0%" stopColor="var(--gradient-start)" />
+                <stop offset="100%" stopColor="var(--gradient-end)" />
               </linearGradient>
             </defs>
-            {/* 4-pointed star rising upward */}
+            {/* Shield / crest shape */}
             <path
-              d="M40 4 L46 30 L72 36 L46 42 L40 68 L34 42 L8 36 L34 30 Z"
-              fill="url(#starGradient)"
+              d="M36 4C36 4 8 14 8 32C8 50 24 66 36 68C48 66 64 50 64 32C64 14 36 4 36 4Z"
+              fill="url(#logoGrad)"
+              opacity="0.12"
             />
-            {/* Upward trail lines */}
-            <line x1="40" y1="72" x2="40" y2="78" stroke="url(#starGradient)" strokeWidth="2" strokeLinecap="round" opacity="0.5" />
-            <line x1="34" y1="70" x2="32" y2="76" stroke="url(#starGradient)" strokeWidth="1.5" strokeLinecap="round" opacity="0.3" />
-            <line x1="46" y1="70" x2="48" y2="76" stroke="url(#starGradient)" strokeWidth="1.5" strokeLinecap="round" opacity="0.3" />
+            <path
+              d="M36 4C36 4 8 14 8 32C8 50 24 66 36 68C48 66 64 50 64 32C64 14 36 4 36 4Z"
+              stroke="url(#logoGrad)"
+              strokeWidth="2"
+              fill="none"
+            />
+            {/* Inner S letterform */}
+            <path
+              d="M42 26C42 22.7 39.3 20 36 20C32.7 20 30 22.7 30 26C30 29.3 32.7 32 36 32C39.3 32 42 34.7 42 38C42 41.3 39.3 44 36 44C32.7 44 30 41.3 30 38"
+              stroke="url(#logoGrad)"
+              strokeWidth="2.5"
+              strokeLinecap="round"
+              fill="none"
+            />
+            {/* Small rising accent */}
+            <circle cx="36" cy="14" r="2" fill="url(#logoGrad)" opacity="0.6" />
           </svg>
         </div>
 
@@ -69,16 +81,15 @@ export default async function Home() {
             </button>
           </SignInButton>
           <SignUpButton mode="modal">
-            <button className="group relative overflow-hidden rounded-xl bg-gradient-to-r from-violet-600 to-purple-600 px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-purple-500/20 transition-all hover:shadow-xl hover:shadow-purple-500/25 hover:scale-[1.02] active:scale-[0.97]">
-              <span className="relative z-10">Get Started</span>
-              <div className="absolute inset-0 bg-gradient-to-r from-purple-600 to-pink-600 opacity-0 transition-opacity group-hover:opacity-100" />
+            <button className="group relative overflow-hidden rounded-xl bg-gradient-to-r from-[var(--gradient-start)] to-[var(--gradient-end)] px-6 py-3 text-sm font-semibold text-primary-foreground shadow-md transition-all hover:shadow-lg hover:scale-[1.02] active:scale-[0.97]">
+              Get Started
             </button>
           </SignUpButton>
         </div>
       </div>
 
       {/* Footer */}
-      <p className="absolute bottom-6 left-0 right-0 text-center text-xs text-muted-foreground/50">
+      <p className="absolute bottom-4 left-0 right-0 text-center text-xs text-muted-foreground/50">
         Powered by AI
       </p>
     </div>

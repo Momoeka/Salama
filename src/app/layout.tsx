@@ -39,13 +39,43 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         <ClerkProvider appearance={{ baseTheme: dark }}>
-          <nav className="sticky top-0 z-50 border-b border-white/[0.04] bg-background/70 backdrop-blur-xl">
+          <nav className="sticky top-0 z-50 border-b border-border/50 bg-background/80 backdrop-blur-xl">
             <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
               {/* Logo */}
               <Link href="/" className="group flex items-center gap-2.5">
-                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-violet-600 to-purple-600 font-bold text-white shadow-lg shadow-purple-500/20 transition-shadow group-hover:shadow-purple-500/40">
-                  S
-                </div>
+                <svg
+                  width="36"
+                  height="36"
+                  viewBox="0 0 72 72"
+                  fill="none"
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="transition-transform group-hover:scale-105"
+                >
+                  <defs>
+                    <linearGradient id="navLogoGrad" x1="0" y1="0" x2="72" y2="72" gradientUnits="userSpaceOnUse">
+                      <stop offset="0%" stopColor="var(--gradient-start)" />
+                      <stop offset="100%" stopColor="var(--gradient-end)" />
+                    </linearGradient>
+                  </defs>
+                  <path
+                    d="M36 4C36 4 8 14 8 32C8 50 24 66 36 68C48 66 64 50 64 32C64 14 36 4 36 4Z"
+                    fill="url(#navLogoGrad)"
+                    opacity="0.15"
+                  />
+                  <path
+                    d="M36 4C36 4 8 14 8 32C8 50 24 66 36 68C48 66 64 50 64 32C64 14 36 4 36 4Z"
+                    stroke="url(#navLogoGrad)"
+                    strokeWidth="2.5"
+                    fill="none"
+                  />
+                  <path
+                    d="M42 26C42 22.7 39.3 20 36 20C32.7 20 30 22.7 30 26C30 29.3 32.7 32 36 32C39.3 32 42 34.7 42 38C42 41.3 39.3 44 36 44C32.7 44 30 41.3 30 38"
+                    stroke="url(#navLogoGrad)"
+                    strokeWidth="3"
+                    strokeLinecap="round"
+                    fill="none"
+                  />
+                </svg>
                 <span className="text-xl font-black tracking-tight text-foreground">
                   SALAMA
                 </span>
@@ -74,7 +104,7 @@ export default function RootLayout({
                   </Link>
                   <Link
                     href="/upload"
-                    className="rounded-xl bg-gradient-to-r from-violet-600 to-purple-600 px-4 py-2 text-sm font-medium text-white shadow-md shadow-purple-500/20 transition-all hover:shadow-lg hover:shadow-purple-500/30 hover:scale-[1.02]"
+                    className="rounded-xl bg-gradient-to-r from-[var(--gradient-start)] to-[var(--gradient-end)] px-4 py-2 text-sm font-medium text-primary-foreground shadow-md transition-all hover:shadow-lg hover:opacity-90 hover:scale-[1.02]"
                   >
                     + Upload
                   </Link>
@@ -91,7 +121,7 @@ export default function RootLayout({
                     </button>
                   </SignInButton>
                   <SignUpButton mode="modal">
-                    <button className="rounded-xl bg-gradient-to-r from-violet-600 to-purple-600 px-4 py-2 text-sm font-medium text-white shadow-md shadow-purple-500/20 transition-all hover:shadow-lg hover:shadow-purple-500/30">
+                    <button className="rounded-xl bg-gradient-to-r from-[var(--gradient-start)] to-[var(--gradient-end)] px-4 py-2 text-sm font-medium text-primary-foreground shadow-md transition-all hover:shadow-lg hover:opacity-90">
                       Sign Up
                     </button>
                   </SignUpButton>
@@ -169,7 +199,7 @@ export default function RootLayout({
 
           {/* Mobile Bottom Nav (fixed, 5 items) */}
           <Show when="signed-in">
-            <nav className="fixed bottom-0 left-0 right-0 z-50 border-t border-white/[0.04] bg-background/90 backdrop-blur-xl sm:hidden pb-safe" style={{ paddingBottom: 'max(0.5rem, env(safe-area-inset-bottom))' }}>
+            <nav className="fixed bottom-0 left-0 right-0 z-50 border-t border-border/50 bg-background/90 backdrop-blur-xl sm:hidden pb-safe" style={{ paddingBottom: 'max(0.5rem, env(safe-area-inset-bottom))' }}>
               <div className="flex items-center justify-around px-2 pt-2">
                 <Link
                   href="/feed"
@@ -197,7 +227,7 @@ export default function RootLayout({
                   href="/upload"
                   className="flex min-h-[48px] min-w-[48px] flex-col items-center justify-center gap-1 text-xs text-white"
                 >
-                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-r from-violet-600 to-purple-600 shadow-lg shadow-purple-500/30">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-r from-[var(--gradient-start)] to-[var(--gradient-end)] shadow-lg shadow-[var(--gradient-start)]/20">
                     <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                       <path d="M12 5v14" />
                       <path d="M5 12h14" />
@@ -230,13 +260,20 @@ export default function RootLayout({
           <main className="min-h-[calc(100vh-4rem)] pb-20 sm:pb-0">{children}</main>
 
           {/* Footer (hidden on mobile where bottom nav is shown) */}
-          <footer className="hidden border-t border-white/[0.04] bg-background/50 py-10 sm:block">
+          <footer className="hidden border-t border-border/50 bg-background/50 py-10 sm:block">
             <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
               <div className="flex flex-col items-center justify-between gap-6 sm:flex-row">
                 <div className="flex items-center gap-2.5">
-                  <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-gradient-to-br from-violet-600 to-purple-600 text-xs font-bold text-white">
-                    S
-                  </div>
+                  <svg width="28" height="28" viewBox="0 0 72 72" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <defs>
+                      <linearGradient id="footerLogoGrad" x1="0" y1="0" x2="72" y2="72" gradientUnits="userSpaceOnUse">
+                        <stop offset="0%" stopColor="var(--gradient-start)" />
+                        <stop offset="100%" stopColor="var(--gradient-end)" />
+                      </linearGradient>
+                    </defs>
+                    <path d="M36 4C36 4 8 14 8 32C8 50 24 66 36 68C48 66 64 50 64 32C64 14 36 4 36 4Z" stroke="url(#footerLogoGrad)" strokeWidth="3" fill="none" />
+                    <path d="M42 26C42 22.7 39.3 20 36 20C32.7 20 30 22.7 30 26C30 29.3 32.7 32 36 32C39.3 32 42 34.7 42 38C42 41.3 39.3 44 36 44C32.7 44 30 41.3 30 38" stroke="url(#footerLogoGrad)" strokeWidth="3.5" strokeLinecap="round" fill="none" />
+                  </svg>
                   <span className="text-sm font-bold text-foreground">SALAMA</span>
                 </div>
                 <div className="flex gap-6 text-xs text-muted-foreground">
