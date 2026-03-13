@@ -60,6 +60,12 @@ export default function RootLayout({
                     Feed
                   </Link>
                   <Link
+                    href="/explore"
+                    className="rounded-lg px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
+                  >
+                    Explore
+                  </Link>
+                  <Link
                     href="/search"
                     className="rounded-lg px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
                   >
@@ -180,6 +186,26 @@ export default function RootLayout({
                     <rect width="7" height="7" x="3" y="14" rx="1" />
                   </svg>
                   Feed
+                </Link>
+                <Link
+                  href="/explore"
+                  className="flex flex-col items-center gap-1 text-xs text-muted-foreground"
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="18"
+                    height="18"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <circle cx="12" cy="12" r="10" />
+                    <polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76" />
+                  </svg>
+                  Explore
                 </Link>
                 <Link
                   href="/search"

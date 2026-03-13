@@ -2,8 +2,11 @@ import { supabaseAdmin } from "@/lib/supabase-admin";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { FollowButton } from "@/components/follow-button";
+import { BlockButton } from "@/components/block-button";
 import { isFollowing } from "@/app/actions/social";
+import { isBlocked, isBlockedBy } from "@/app/actions/block";
 import { getOrCreateUser } from "@/lib/user";
+import { ProfileTabs } from "../profile-tabs";
 
 export const dynamic = "force-dynamic";
 
@@ -14,6 +17,23 @@ export default async function UserProfilePage({
 }) {
   const { id } = await params;
 
+  const currentUser = await getOrCreateUser();
+
+  // Check if this user blocked us
+  const blockedByThem = currentUser ? await isBlockedBy(id) : false;
+  if (blockedByThem) {
+    return (
+      <div className="mx-auto max-w-4xl px-4 py-20 text-center sm:px-6 lg:px-8">
+        <h2 className="mb-2 text-xl font-bold text-foreground">
+          This profile is not available
+        </h2>
+        <p className="text-muted-foreground">
+          The content you&apos;re looking for doesn&apos;t exist or is unavailable.
+        </p>
+      </div>
+    );
+  }
+
   const { data: profileUser } = await supabaseAdmin
     .from("users")
     .select("*")
@@ -22,26 +42,28 @@ export default async function UserProfilePage({
 
   if (!profileUser) notFound();
 
-  const { data: posts } = await supabaseAdmin
-    .from("posts")
-    .select("*")
-    .eq("user_id", id)
-    .eq("visibility", "public")
-    .order("created_at", { ascending: false });
+  const [{ data: posts }, { count: followerCount }, { count: followingCount }] =
+    await Promise.all([
+      supabaseAdmin
+        .from("posts")
+        .select("*")
+        .eq("user_id", id)
+        .eq("visibility", "public")
+        .order("created_at", { ascending: false }),
+      supabaseAdmin
+        .from("follows")
+        .select("*", { count: "exact", head: true })
+        .eq("following_id", id),
+      supabaseAdmin
+        .from("follows")
+        .select("*", { count: "exact", head: true })
+        .eq("follower_id", id),
+    ]);
 
-  const { count: followerCount } = await supabaseAdmin
-    .from("follows")
-    .select("*", { count: "exact", head: true })
-    .eq("following_id", id);
-
-  const { count: followingCount } = await supabaseAdmin
-    .from("follows")
-    .select("*", { count: "exact", head: true })
-    .eq("follower_id", id);
-
-  const currentUser = await getOrCreateUser();
   const isOwnProfile = currentUser?.id === id;
-  const following = currentUser ? await isFollowing(id) : false;
+  const [following, blocked] = currentUser && !isOwnProfile
+    ? await Promise.all([isFollowing(id), isBlocked(id)])
+    : [false, false];
 
   return (
     <div className="mx-auto max-w-4xl px-4 py-8 sm:px-6 lg:px-8">
@@ -51,10 +73,10 @@ export default async function UserProfilePage({
           <img
             src={profileUser.avatar_url}
             alt={profileUser.username}
-            className="h-24 w-24 rounded-full"
+            className="h-24 w-24 rounded-full object-cover ring-4 ring-border"
           />
         ) : (
-          <div className="flex h-24 w-24 items-center justify-center rounded-full bg-primary text-3xl font-bold text-primary-foreground">
+          <div className="flex h-24 w-24 items-center justify-center rounded-full bg-gradient-to-br from-violet-600 to-purple-600 text-3xl font-bold text-white ring-4 ring-border">
             {profileUser.username[0]?.toUpperCase()}
           </div>
         )}
@@ -94,61 +116,38 @@ export default async function UserProfilePage({
             Edit Profile
           </Link>
         ) : currentUser ? (
-          <div className="flex items-center gap-2">
-            <FollowButton targetUserId={id} initialFollowing={following} />
-            <Link
-              href={`/messages/NEW?user=${id}`}
-              className="rounded-xl border border-border px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-secondary"
-            >
-              <span className="flex items-center gap-1.5">
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  width="16"
-                  height="16"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
-                </svg>
-                Message
-              </span>
-            </Link>
+          <div className="flex flex-col items-end gap-2">
+            <div className="flex items-center gap-2">
+              <FollowButton targetUserId={id} initialFollowing={following} />
+              <Link
+                href={`/messages/NEW?user=${id}`}
+                className="rounded-xl border border-border px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-secondary"
+              >
+                <span className="flex items-center gap-1.5">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="16"
+                    height="16"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+                  </svg>
+                  Message
+                </span>
+              </Link>
+            </div>
+            <BlockButton targetUserId={id} initialBlocked={blocked} />
           </div>
         ) : null}
       </div>
 
       {/* Posts Grid */}
-      <div className="border-t border-border pt-8">
-        <h2 className="mb-6 text-lg font-semibold text-foreground">Posts</h2>
-        {!posts || posts.length === 0 ? (
-          <p className="text-center text-muted-foreground">No posts yet.</p>
-        ) : (
-          <div className="grid gap-4 grid-cols-2 sm:grid-cols-3">
-            {posts.map((post: any) => (
-              <Link
-                key={post.id}
-                href={`/post/${post.id}`}
-                className="group relative aspect-square overflow-hidden rounded-xl"
-              >
-                <img
-                  src={post.image_url}
-                  alt={post.caption}
-                  className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
-                />
-                <div className="absolute inset-0 flex items-end bg-gradient-to-t from-black/60 to-transparent opacity-0 transition-opacity group-hover:opacity-100">
-                  <p className="p-3 text-sm text-white line-clamp-2">
-                    {post.caption}
-                  </p>
-                </div>
-              </Link>
-            ))}
-          </div>
-        )}
-      </div>
+      <ProfileTabs posts={posts || []} />
     </div>
   );
 }

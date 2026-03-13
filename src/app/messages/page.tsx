@@ -2,6 +2,7 @@ import { getConversations } from "@/app/actions/messages";
 import { getOrCreateUser } from "@/lib/user";
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import MessagesHeader from "@/components/messages-header";
 
 export const dynamic = "force-dynamic";
 
@@ -28,7 +29,7 @@ export default async function MessagesPage() {
 
   return (
     <div className="mx-auto max-w-2xl px-4 py-8 sm:px-6 lg:px-8">
-      <h1 className="mb-8 text-3xl font-bold text-foreground">Messages</h1>
+      <MessagesHeader />
 
       {conversations.length === 0 ? (
         <div className="rounded-2xl border border-border bg-card p-12 text-center">

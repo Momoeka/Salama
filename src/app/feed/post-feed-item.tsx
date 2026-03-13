@@ -1,9 +1,13 @@
 "use client";
 
-import { useState, useRef, useTransition } from "react";
+import { useState, useTransition } from "react";
 import Link from "next/link";
-import { toggleLike, addComment } from "@/app/actions/social";
+import { toggleLike } from "@/app/actions/social";
+import { toggleSavePost } from "@/app/actions/saved";
 import { ShareDialog } from "@/components/share-dialog";
+import { ReportModal } from "@/components/report-modal";
+import { CommentPanel } from "@/components/comment-panel";
+import { AuthRequiredModal } from "@/components/auth-required-modal";
 
 interface Comment {
   id: string;
@@ -32,8 +36,10 @@ export interface PostFeedItemProps {
     likeCount: number;
     commentCount: number;
     hasLiked: boolean;
+    hasSaved: boolean;
     recentComments: Comment[];
   };
+  isLoggedIn?: boolean;
 }
 
 function timeAgo(dateString: string): string {
@@ -53,19 +59,30 @@ function timeAgo(dateString: string): string {
   return date.toLocaleDateString();
 }
 
-export function PostFeedItem({ post }: PostFeedItemProps) {
+export function PostFeedItem({ post, isLoggedIn = true }: PostFeedItemProps) {
   const [liked, setLiked] = useState(post.hasLiked);
   const [likeCount, setLikeCount] = useState(post.likeCount);
   const [comments, setComments] = useState<Comment[]>(post.recentComments);
   const [commentCount, setCommentCount] = useState(post.commentCount);
-  const [showAllComments, setShowAllComments] = useState(false);
-  const [showCommentInput, setShowCommentInput] = useState(false);
-  const [commentText, setCommentText] = useState("");
+  const [commentPanelOpen, setCommentPanelOpen] = useState(false);
+  const [saved, setSaved] = useState(post.hasSaved);
   const [shareOpen, setShareOpen] = useState(false);
+  const [reportOpen, setReportOpen] = useState(false);
+  const [moreMenuOpen, setMoreMenuOpen] = useState(false);
   const [likeAnimating, setLikeAnimating] = useState(false);
+  const [authModalOpen, setAuthModalOpen] = useState(false);
+  const [authAction, setAuthAction] = useState("continue");
   const [isPending, startTransition] = useTransition();
-  const commentInputRef = useRef<HTMLInputElement>(null);
   const isVideo = post.media_type === "video";
+
+  function requireAuth(action: string, callback: () => void) {
+    if (!isLoggedIn) {
+      setAuthAction(action);
+      setAuthModalOpen(true);
+      return;
+    }
+    callback();
+  }
 
   function handleLike() {
     const wasLiked = liked;
@@ -87,38 +104,21 @@ export function PostFeedItem({ post }: PostFeedItemProps) {
   }
 
   function handleCommentClick() {
-    setShowCommentInput(true);
-    setTimeout(() => commentInputRef.current?.focus(), 50);
+    setCommentPanelOpen(true);
   }
 
   function handleReport() {
-    alert("Report submitted. We will review this post.");
+    setReportOpen(true);
   }
 
-  async function handleSubmitComment(e: React.FormEvent) {
-    e.preventDefault();
-    if (!commentText.trim()) return;
-
-    const text = commentText.trim();
-    setCommentText("");
-
-    // Optimistic: add a temporary comment
-    const tempComment: Comment = {
-      id: `temp-${Date.now()}`,
-      content: text,
-      created_at: new Date().toISOString(),
-      user: { id: "me", username: "You", avatar_url: null },
-    };
-    setComments((prev) => [...prev, tempComment]);
-    setCommentCount((c) => c + 1);
-
+  function handleSave() {
+    const wasSaved = saved;
+    setSaved(!wasSaved);
     startTransition(async () => {
       try {
-        await addComment(post.id, text);
+        await toggleSavePost(post.id);
       } catch {
-        // Revert on error
-        setComments((prev) => prev.filter((c) => c.id !== tempComment.id));
-        setCommentCount((c) => c - 1);
+        setSaved(wasSaved);
       }
     });
   }
@@ -211,7 +211,7 @@ export function PostFeedItem({ post }: PostFeedItemProps) {
         <div className="flex items-center gap-4">
           {/* Like */}
           <button
-            onClick={handleLike}
+            onClick={() => requireAuth("like this post", handleLike)}
             className="group transition-transform active:scale-90"
             aria-label={liked ? "Unlike" : "Like"}
           >
@@ -250,7 +250,7 @@ export function PostFeedItem({ post }: PostFeedItemProps) {
 
           {/* Comment */}
           <button
-            onClick={handleCommentClick}
+            onClick={() => requireAuth("comment", handleCommentClick)}
             className="group transition-transform active:scale-90"
             aria-label="Comment"
           >
@@ -318,28 +318,106 @@ export function PostFeedItem({ post }: PostFeedItemProps) {
           </button>
         </div>
 
-        {/* Report - far right */}
-        <button
-          onClick={handleReport}
-          className="ml-auto group transition-transform active:scale-90"
-          aria-label="Report"
-        >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            width="20"
-            height="20"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            className="text-muted-foreground transition-all group-hover:scale-110 group-hover:text-orange-400"
+        {/* Right side: Bookmark + More menu */}
+        <div className="ml-auto flex items-center gap-3">
+          {/* Bookmark / Save */}
+          <button
+            onClick={() => requireAuth("save posts", handleSave)}
+            className="group transition-transform active:scale-90"
+            aria-label={saved ? "Unsave" : "Save"}
           >
-            <path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z" />
-            <line x1="4" x2="4" y1="22" y2="15" />
-          </svg>
-        </button>
+            {saved ? (
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="24"
+                height="24"
+                viewBox="0 0 24 24"
+                fill="currentColor"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                className="text-foreground transition-transform group-hover:scale-110"
+              >
+                <path d="m19 21-7-4-7 4V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16z" />
+              </svg>
+            ) : (
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="24"
+                height="24"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                className="text-foreground transition-all group-hover:scale-110 group-hover:text-primary"
+              >
+                <path d="m19 21-7-4-7 4V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16z" />
+              </svg>
+            )}
+          </button>
+
+          {/* More (...) menu */}
+          <div className="relative">
+            <button
+              onClick={() => setMoreMenuOpen((v) => !v)}
+              className="group transition-transform active:scale-90"
+              aria-label="More options"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="20"
+                height="20"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                className="text-muted-foreground transition-all group-hover:scale-110 group-hover:text-foreground"
+              >
+                <circle cx="12" cy="12" r="1" />
+                <circle cx="19" cy="12" r="1" />
+                <circle cx="5" cy="12" r="1" />
+              </svg>
+            </button>
+            {moreMenuOpen && (
+              <>
+                <div
+                  className="fixed inset-0 z-40"
+                  onClick={() => setMoreMenuOpen(false)}
+                />
+                <div className="absolute right-0 top-8 z-50 w-44 rounded-xl border border-border bg-card py-1 shadow-lg">
+                  <button
+                    onClick={() => {
+                      setMoreMenuOpen(false);
+                      setReportOpen(true);
+                    }}
+                    className="flex w-full items-center gap-2 px-4 py-2.5 text-sm text-red-400 hover:bg-secondary transition-colors"
+                  >
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      width="16"
+                      height="16"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
+                      <path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z" />
+                      <line x1="4" x2="4" y1="22" y2="15" />
+                    </svg>
+                    Report
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
       </div>
 
       {/* Like count */}
@@ -363,9 +441,9 @@ export function PostFeedItem({ post }: PostFeedItemProps) {
       </div>
 
       {/* View all comments */}
-      {commentCount > comments.length && !showAllComments && (
+      {commentCount > comments.length && (
         <button
-          onClick={() => setShowAllComments(true)}
+          onClick={() => setCommentPanelOpen(true)}
           className="px-4 pb-1 text-sm text-muted-foreground hover:text-foreground transition-colors"
         >
           View all {commentCount} comments
@@ -375,7 +453,7 @@ export function PostFeedItem({ post }: PostFeedItemProps) {
       {/* Comments */}
       {comments.length > 0 && (
         <div className="px-4 pb-1 space-y-1">
-          {(showAllComments ? comments : comments.slice(0, 3)).map(
+          {comments.slice(0, 3).map(
             (comment) => (
               <p key={comment.id} className="text-sm text-foreground">
                 <span className="mr-1.5 font-semibold">
@@ -395,35 +473,51 @@ export function PostFeedItem({ post }: PostFeedItemProps) {
         </time>
       </div>
 
-      {/* Comment input */}
-      {showCommentInput && (
-        <form
-          onSubmit={handleSubmitComment}
-          className="flex items-center gap-2 border-t border-border px-4 py-3"
-        >
-          <input
-            ref={commentInputRef}
-            type="text"
-            placeholder="Add a comment..."
-            value={commentText}
-            onChange={(e) => setCommentText(e.target.value)}
-            className="flex-1 bg-transparent text-sm text-foreground placeholder:text-muted-foreground outline-none"
-          />
-          <button
-            type="submit"
-            disabled={!commentText.trim() || isPending}
-            className="text-sm font-semibold text-primary transition-opacity disabled:opacity-40 hover:opacity-70"
-          >
-            Post
-          </button>
-        </form>
-      )}
+      {/* Comment Panel */}
+      <CommentPanel
+        postId={post.id}
+        isOpen={commentPanelOpen}
+        onClose={() => setCommentPanelOpen(false)}
+        initialComments={comments}
+        commentCount={commentCount}
+        post={{
+          image_url: post.image_url,
+          caption: post.caption,
+          user: {
+            username: post.user.username,
+            avatar_url: post.user.avatar_url,
+          },
+        }}
+      />
 
       {/* Share Dialog */}
       <ShareDialog
         postId={post.id}
         isOpen={shareOpen}
         onClose={() => setShareOpen(false)}
+      />
+
+      {/* Report Modal */}
+      <ReportModal
+        isOpen={reportOpen}
+        onClose={() => setReportOpen(false)}
+        targetType="post"
+        targetId={post.id}
+      />
+
+      {/* Report Modal */}
+      <ReportModal
+        isOpen={reportOpen}
+        onClose={() => setReportOpen(false)}
+        targetType="post"
+        targetId={post.id}
+      />
+
+      {/* Auth Required Modal */}
+      <AuthRequiredModal
+        isOpen={authModalOpen}
+        onClose={() => setAuthModalOpen(false)}
+        action={authAction}
       />
 
       {/* Inline keyframe for heart animation */}

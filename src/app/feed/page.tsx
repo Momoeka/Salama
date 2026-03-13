@@ -33,6 +33,7 @@ export default async function FeedPage() {
             { count: commentCount },
             { data: userLike },
             { data: recentComments },
+            { data: userSaved },
           ] = await Promise.all([
             supabaseAdmin
               .from("likes")
@@ -63,6 +64,14 @@ export default async function FeedPage() {
               .eq("post_id", post.id)
               .order("created_at", { ascending: false })
               .limit(3),
+            user
+              ? supabaseAdmin
+                  .from("saved_posts")
+                  .select("id")
+                  .eq("post_id", post.id)
+                  .eq("user_id", user.id)
+                  .maybeSingle()
+              : Promise.resolve({ data: null }),
           ]);
 
           return {
@@ -80,6 +89,7 @@ export default async function FeedPage() {
             likeCount: likeCount || 0,
             commentCount: commentCount || 0,
             hasLiked: !!userLike,
+            hasSaved: !!userSaved,
             recentComments: (recentComments || [])
               .reverse()
               .map((c: any) => ({
@@ -138,7 +148,7 @@ export default async function FeedPage() {
       ) : (
         <div className="flex flex-col">
           {enrichedPosts.map((post) => (
-            <PostFeedItem key={post.id} post={post} />
+            <PostFeedItem key={post.id} post={post} isLoggedIn={!!user} />
           ))}
         </div>
       )}
