@@ -10,7 +10,7 @@ import {
 import { dark } from "@clerk/themes";
 import Link from "next/link";
 import { ThemeToggle } from "@/components/theme-toggle";
-import { StreamChatProvider } from "@/components/stream-chat-provider";
+import { StreamChatWrapper } from "@/components/stream-chat-wrapper";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -281,9 +281,9 @@ export default function RootLayout({
             </nav>
           </Show>
 
-          <StreamChatProvider>
+          <StreamChatWrapper>
           <main className="min-h-[calc(100vh-4rem)] pb-20 sm:pb-0">{children}</main>
-          </StreamChatProvider>
+          </StreamChatWrapper>
 
           {/* Footer (hidden on mobile where bottom nav is shown) */}
           <footer className="hidden border-t border-border/50 bg-background/50 py-10 sm:block">
