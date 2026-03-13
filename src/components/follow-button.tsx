@@ -35,13 +35,13 @@ export function FollowButton({
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
       disabled={isPending}
-      className={`rounded-xl px-6 py-2 text-sm font-medium transition-all ${
+      className={`rounded-md px-4 py-1.5 text-sm font-medium transition-all ${
         following
           ? showUnfollow
-            ? "border border-red-500/50 text-red-500 bg-red-500/10"
-            : "border border-border text-foreground"
-          : "bg-gradient-to-r from-violet-600 to-purple-600 text-white shadow-md shadow-purple-500/20 hover:shadow-lg hover:shadow-purple-500/30"
-      } ${isPending ? "opacity-60 cursor-not-allowed" : ""}`}
+            ? "border border-destructive/40 text-destructive"
+            : "border border-border text-foreground hover:bg-secondary"
+          : "bg-primary text-primary-foreground hover:opacity-90"
+      } ${isPending ? "opacity-50 pointer-events-none" : ""}`}
     >
       {isPending
         ? "..."

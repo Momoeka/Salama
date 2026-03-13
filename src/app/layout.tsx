@@ -23,9 +23,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "SALAMA - Share Your World",
-  description:
-    "A modern image gallery and social platform powered by AI. Upload, discover, and connect.",
+  title: "SALAMA",
+  description: "Share moments. Discover stories.",
 };
 
 export default function RootLayout({
@@ -39,89 +38,60 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         <ClerkProvider appearance={{ baseTheme: dark }}>
-          <nav className="sticky top-0 z-50 border-b border-border/50 bg-background/80 backdrop-blur-xl">
-            <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
+          {/* Desktop Nav */}
+          <nav className="sticky top-0 z-50 border-b border-border bg-background/80 backdrop-blur-xl">
+            <div className="mx-auto flex h-14 max-w-6xl items-center justify-between px-4 sm:px-6">
               {/* Logo */}
-              <Link href="/" className="group flex items-center gap-2.5">
-                <svg
-                  width="36"
-                  height="36"
-                  viewBox="0 0 72 72"
-                  fill="none"
-                  xmlns="http://www.w3.org/2000/svg"
-                  className="transition-transform group-hover:scale-105"
-                >
-                  <defs>
-                    <linearGradient id="navLogoGrad" x1="0" y1="0" x2="72" y2="72" gradientUnits="userSpaceOnUse">
-                      <stop offset="0%" stopColor="var(--gradient-start)" />
-                      <stop offset="100%" stopColor="var(--gradient-end)" />
-                    </linearGradient>
-                  </defs>
-                  <path
-                    d="M36 4C36 4 8 14 8 32C8 50 24 66 36 68C48 66 64 50 64 32C64 14 36 4 36 4Z"
-                    fill="url(#navLogoGrad)"
-                    opacity="0.15"
-                  />
-                  <path
-                    d="M36 4C36 4 8 14 8 32C8 50 24 66 36 68C48 66 64 50 64 32C64 14 36 4 36 4Z"
-                    stroke="url(#navLogoGrad)"
-                    strokeWidth="2.5"
-                    fill="none"
-                  />
-                  <path
-                    d="M42 26C42 22.7 39.3 20 36 20C32.7 20 30 22.7 30 26C30 29.3 32.7 32 36 32C39.3 32 42 34.7 42 38C42 41.3 39.3 44 36 44C32.7 44 30 41.3 30 38"
-                    stroke="url(#navLogoGrad)"
-                    strokeWidth="3"
-                    strokeLinecap="round"
-                    fill="none"
-                  />
-                </svg>
-                <span className="text-xl font-black tracking-tight text-foreground">
+              <Link href="/" className="flex items-center gap-2">
+                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-violet-600 to-purple-700 text-sm font-bold text-white">
+                  S
+                </div>
+                <span className="text-base font-bold text-foreground">
                   SALAMA
                 </span>
               </Link>
 
-              {/* Nav Links (shown when signed in) */}
+              {/* Nav Links */}
               <Show when="signed-in">
-                <div className="hidden items-center gap-1 sm:flex">
+                <div className="hidden items-center gap-0.5 sm:flex">
                   <Link
                     href="/feed"
-                    className="rounded-lg px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
+                    className="rounded-md px-3 py-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground"
                   >
                     Feed
                   </Link>
                   <Link
                     href="/explore"
-                    className="rounded-lg px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
+                    className="rounded-md px-3 py-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground"
                   >
                     Explore
                   </Link>
                   <Link
                     href="/search"
-                    className="rounded-lg px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
+                    className="rounded-md px-3 py-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground"
                   >
                     Search
                   </Link>
                   <Link
                     href="/upload"
-                    className="rounded-xl bg-gradient-to-r from-[var(--gradient-start)] to-[var(--gradient-end)] px-4 py-2 text-sm font-medium text-primary-foreground shadow-md transition-all hover:shadow-lg hover:opacity-90 hover:scale-[1.02]"
+                    className="ml-2 rounded-md bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground transition-opacity hover:opacity-90"
                   >
-                    + Upload
+                    Upload
                   </Link>
                 </div>
               </Show>
 
-              {/* Auth */}
-              <div className="flex items-center gap-3">
+              {/* Right side */}
+              <div className="flex items-center gap-2">
                 <Show when="signed-out">
                   <ThemeToggle />
                   <SignInButton mode="modal">
-                    <button className="rounded-lg px-4 py-2 text-sm text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground">
+                    <button className="rounded-md px-3 py-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground">
                       Sign In
                     </button>
                   </SignInButton>
                   <SignUpButton mode="modal">
-                    <button className="rounded-xl bg-gradient-to-r from-[var(--gradient-start)] to-[var(--gradient-end)] px-4 py-2 text-sm font-medium text-primary-foreground shadow-md transition-all hover:shadow-lg hover:opacity-90">
+                    <button className="rounded-md bg-foreground px-3 py-1.5 text-sm font-medium text-background transition-opacity hover:opacity-90">
                       Sign Up
                     </button>
                   </SignUpButton>
@@ -129,56 +99,26 @@ export default function RootLayout({
                 <Show when="signed-in">
                   <Link
                     href="/messages"
-                    className="rounded-lg p-2 text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
+                    className="rounded-md p-2 text-muted-foreground transition-colors hover:text-foreground"
                   >
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      width="20"
-                      height="20"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    >
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
                       <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
                     </svg>
                   </Link>
                   <Link
                     href="/notifications"
-                    className="rounded-lg p-2 text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
+                    className="rounded-md p-2 text-muted-foreground transition-colors hover:text-foreground"
                   >
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      width="20"
-                      height="20"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    >
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
                       <path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9" />
                       <path d="M10.3 21a1.94 1.94 0 0 0 3.4 0" />
                     </svg>
                   </Link>
                   <Link
                     href="/profile"
-                    className="rounded-lg p-2 text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
+                    className="rounded-md p-2 text-muted-foreground transition-colors hover:text-foreground"
                   >
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      width="20"
-                      height="20"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    >
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
                       <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" />
                       <circle cx="12" cy="7" r="4" />
                     </svg>
@@ -187,67 +127,49 @@ export default function RootLayout({
                   <UserButton
                     appearance={{
                       elements: {
-                        avatarBox: "h-8 w-8",
+                        avatarBox: "h-7 w-7",
                       },
                     }}
                   />
                 </Show>
               </div>
             </div>
-
           </nav>
 
-          {/* Mobile Bottom Nav (fixed, 5 items) */}
+          {/* Mobile Bottom Nav */}
           <Show when="signed-in">
-            <nav className="fixed bottom-0 left-0 right-0 z-50 border-t border-border/50 bg-background/90 backdrop-blur-xl sm:hidden pb-safe" style={{ paddingBottom: 'max(0.5rem, env(safe-area-inset-bottom))' }}>
-              <div className="flex items-center justify-around px-2 pt-2">
-                <Link
-                  href="/feed"
-                  className="flex min-h-[44px] min-w-[44px] flex-col items-center justify-center gap-1 text-xs text-muted-foreground"
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <rect width="7" height="7" x="3" y="3" rx="1" />
-                    <rect width="7" height="7" x="14" y="3" rx="1" />
-                    <rect width="7" height="7" x="14" y="14" rx="1" />
-                    <rect width="7" height="7" x="3" y="14" rx="1" />
+            <nav className="fixed bottom-0 left-0 right-0 z-50 border-t border-border bg-background/95 backdrop-blur-xl sm:hidden pb-safe" style={{ paddingBottom: 'max(0.25rem, env(safe-area-inset-bottom))' }}>
+              <div className="flex items-center justify-around px-1 pt-1.5 pb-1">
+                <Link href="/feed" className="flex min-h-[44px] min-w-[44px] flex-col items-center justify-center gap-0.5 text-[10px] text-muted-foreground">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+                    <polyline points="9 22 9 12 15 12 15 22" />
                   </svg>
-                  Feed
+                  Home
                 </Link>
-                <Link
-                  href="/explore"
-                  className="flex min-h-[44px] min-w-[44px] flex-col items-center justify-center gap-1 text-xs text-muted-foreground"
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <circle cx="12" cy="12" r="10" />
-                    <polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76" />
+                <Link href="/explore" className="flex min-h-[44px] min-w-[44px] flex-col items-center justify-center gap-0.5 text-[10px] text-muted-foreground">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+                    <circle cx="11" cy="11" r="8" />
+                    <path d="m21 21-4.3-4.3" />
                   </svg>
                   Explore
                 </Link>
-                <Link
-                  href="/upload"
-                  className="flex min-h-[48px] min-w-[48px] flex-col items-center justify-center gap-1 text-xs text-white"
-                >
-                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-r from-[var(--gradient-start)] to-[var(--gradient-end)] shadow-lg shadow-[var(--gradient-start)]/20">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <Link href="/upload" className="flex min-h-[44px] min-w-[44px] flex-col items-center justify-center">
+                  <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary text-white">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                       <path d="M12 5v14" />
                       <path d="M5 12h14" />
                     </svg>
                   </div>
                 </Link>
-                <Link
-                  href="/messages"
-                  className="flex min-h-[44px] min-w-[44px] flex-col items-center justify-center gap-1 text-xs text-muted-foreground"
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <Link href="/messages" className="flex min-h-[44px] min-w-[44px] flex-col items-center justify-center gap-0.5 text-[10px] text-muted-foreground">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
                     <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
                   </svg>
-                  Messages
+                  Chat
                 </Link>
-                <Link
-                  href="/profile"
-                  className="flex min-h-[44px] min-w-[44px] flex-col items-center justify-center gap-1 text-xs text-muted-foreground"
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <Link href="/profile" className="flex min-h-[44px] min-w-[44px] flex-col items-center justify-center gap-0.5 text-[10px] text-muted-foreground">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
                     <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" />
                     <circle cx="12" cy="7" r="4" />
                   </svg>
@@ -257,34 +179,25 @@ export default function RootLayout({
             </nav>
           </Show>
 
-          <main className="min-h-[calc(100vh-4rem)] pb-20 sm:pb-0">{children}</main>
+          <main className="min-h-[calc(100vh-3.5rem)] pb-20 sm:pb-0">{children}</main>
 
-          {/* Footer (hidden on mobile where bottom nav is shown) */}
-          <footer className="hidden border-t border-border/50 bg-background/50 py-10 sm:block">
-            <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-              <div className="flex flex-col items-center justify-between gap-6 sm:flex-row">
-                <div className="flex items-center gap-2.5">
-                  <svg width="28" height="28" viewBox="0 0 72 72" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <defs>
-                      <linearGradient id="footerLogoGrad" x1="0" y1="0" x2="72" y2="72" gradientUnits="userSpaceOnUse">
-                        <stop offset="0%" stopColor="var(--gradient-start)" />
-                        <stop offset="100%" stopColor="var(--gradient-end)" />
-                      </linearGradient>
-                    </defs>
-                    <path d="M36 4C36 4 8 14 8 32C8 50 24 66 36 68C48 66 64 50 64 32C64 14 36 4 36 4Z" stroke="url(#footerLogoGrad)" strokeWidth="3" fill="none" />
-                    <path d="M42 26C42 22.7 39.3 20 36 20C32.7 20 30 22.7 30 26C30 29.3 32.7 32 36 32C39.3 32 42 34.7 42 38C42 41.3 39.3 44 36 44C32.7 44 30 41.3 30 38" stroke="url(#footerLogoGrad)" strokeWidth="3.5" strokeLinecap="round" fill="none" />
-                  </svg>
-                  <span className="text-sm font-bold text-foreground">SALAMA</span>
+          {/* Footer */}
+          <footer className="hidden border-t border-border py-8 sm:block">
+            <div className="mx-auto flex max-w-6xl items-center justify-between px-4 sm:px-6">
+              <div className="flex items-center gap-2">
+                <div className="flex h-6 w-6 items-center justify-center rounded-md bg-gradient-to-br from-violet-600 to-purple-700 text-[10px] font-bold text-white">
+                  S
                 </div>
-                <div className="flex gap-6 text-xs text-muted-foreground">
-                  <Link href="/feed" className="transition-colors hover:text-foreground">Feed</Link>
-                  <Link href="/search" className="transition-colors hover:text-foreground">Search</Link>
-                  <Link href="/upload" className="transition-colors hover:text-foreground">Upload</Link>
-                </div>
-                <p className="text-xs text-muted-foreground">
-                  &copy; {new Date().getFullYear()} SALAMA. Built with heart & AI.
-                </p>
+                <span className="text-xs font-semibold text-foreground">SALAMA</span>
               </div>
+              <div className="flex gap-5 text-xs text-muted-foreground">
+                <Link href="/feed" className="transition-colors hover:text-foreground">Feed</Link>
+                <Link href="/explore" className="transition-colors hover:text-foreground">Explore</Link>
+                <Link href="/search" className="transition-colors hover:text-foreground">Search</Link>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                &copy; {new Date().getFullYear()} SALAMA
+              </p>
             </div>
           </footer>
         </ClerkProvider>

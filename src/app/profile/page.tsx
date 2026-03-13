@@ -40,67 +40,55 @@ export default async function ProfilePage() {
   }
 
   return (
-    <div className="mx-auto max-w-4xl px-4 py-8 sm:px-6 lg:px-8">
+    <div className="mx-auto max-w-3xl px-4 py-6 sm:px-6 sm:py-8">
       <Show when="signed-in">
         {user && (
           <>
             {/* Profile Header */}
-            <div className="mb-8 flex flex-col items-center gap-6 sm:flex-row sm:items-start">
+            <div className="mb-8 flex flex-col items-center gap-5 sm:flex-row sm:items-start sm:gap-8">
               {user.avatar_url ? (
                 <img
                   src={user.avatar_url}
                   alt={user.username}
-                  className="h-24 w-24 rounded-full object-cover ring-4 ring-border"
+                  className="h-20 w-20 rounded-full object-cover ring-2 ring-border sm:h-24 sm:w-24"
                 />
               ) : (
-                <div className="flex h-24 w-24 items-center justify-center rounded-full bg-gradient-to-br from-violet-600 to-purple-600 text-3xl font-bold text-white ring-4 ring-border">
+                <div className="flex h-20 w-20 items-center justify-center rounded-full bg-primary text-2xl font-semibold text-primary-foreground ring-2 ring-border sm:h-24 sm:w-24 sm:text-3xl">
                   {user.username[0]?.toUpperCase()}
                 </div>
               )}
               <div className="flex-1 text-center sm:text-left">
-                <h1 className="mb-1 text-2xl font-bold text-foreground">
-                  {user.username}
-                </h1>
-                <p className="mb-1 text-sm text-muted-foreground">
-                  {user.email}
-                </p>
-                {user.bio && (
-                  <p className="mb-4 text-sm text-foreground">{user.bio}</p>
-                )}
-                <div className="flex justify-center gap-8 sm:justify-start">
-                  <div className="text-center">
-                    <div className="text-lg font-bold text-foreground">
-                      {posts.length}
-                    </div>
-                    <div className="text-xs text-muted-foreground">Posts</div>
+                <div className="mb-3 flex flex-col items-center gap-3 sm:flex-row sm:items-center">
+                  <h1 className="text-xl font-semibold text-foreground">
+                    {user.username}
+                  </h1>
+                  <Link
+                    href="/settings"
+                    className="rounded-md border border-border px-4 py-1.5 text-xs font-medium text-foreground transition-colors hover:bg-secondary"
+                  >
+                    Edit Profile
+                  </Link>
+                </div>
+                <div className="mb-3 flex justify-center gap-6 sm:justify-start">
+                  <div className="text-center sm:text-left">
+                    <span className="font-semibold text-foreground">{posts.length}</span>
+                    <span className="ml-1 text-sm text-muted-foreground">posts</span>
                   </div>
-                  <div className="text-center">
-                    <div className="text-lg font-bold text-foreground">
-                      {followerCount}
-                    </div>
-                    <div className="text-xs text-muted-foreground">
-                      Followers
-                    </div>
+                  <div className="text-center sm:text-left">
+                    <span className="font-semibold text-foreground">{followerCount}</span>
+                    <span className="ml-1 text-sm text-muted-foreground">followers</span>
                   </div>
-                  <div className="text-center">
-                    <div className="text-lg font-bold text-foreground">
-                      {followingCount}
-                    </div>
-                    <div className="text-xs text-muted-foreground">
-                      Following
-                    </div>
+                  <div className="text-center sm:text-left">
+                    <span className="font-semibold text-foreground">{followingCount}</span>
+                    <span className="ml-1 text-sm text-muted-foreground">following</span>
                   </div>
                 </div>
+                {user.bio && (
+                  <p className="text-sm text-foreground">{user.bio}</p>
+                )}
               </div>
-              <Link
-                href="/settings"
-                className="rounded-xl border border-border px-6 py-2 text-sm font-medium text-foreground transition-colors hover:bg-secondary"
-              >
-                Edit Profile
-              </Link>
             </div>
 
-            {/* Posts & Saved Tabs */}
             <ProfileTabs
               posts={posts}
               savedPosts={savedPosts}
@@ -111,11 +99,11 @@ export default async function ProfilePage() {
       </Show>
       <Show when="signed-out">
         <div className="py-20 text-center">
-          <h2 className="mb-4 text-2xl font-bold text-foreground">
+          <h2 className="mb-2 text-lg font-semibold text-foreground">
             Sign in to view your profile
           </h2>
-          <p className="text-muted-foreground">
-            Create an account or sign in to manage your profile and posts.
+          <p className="text-sm text-muted-foreground">
+            Create an account or sign in to get started.
           </p>
         </div>
       </Show>
