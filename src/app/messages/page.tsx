@@ -21,7 +21,7 @@ function timeAgo(dateStr: string): string {
 }
 
 export default function MessagesPage() {
-  const { client, userId, isReady } = useStreamChat();
+  const { client, userId, isReady, error, retry } = useStreamChat();
   const [channels, setChannels] = useState<Channel[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
@@ -144,6 +144,26 @@ export default function MessagesPage() {
     } catch (err) {
       console.error("Failed to create group:", err);
     }
+  }
+
+  if (error) {
+    return (
+      <div className="mx-auto max-w-2xl px-2 py-4 sm:px-6 sm:py-8 lg:px-8">
+        <div className="flex items-center justify-between mb-6">
+          <h1 className="text-2xl font-bold text-foreground">Messages</h1>
+        </div>
+        <div className="rounded-2xl border border-red-500/20 bg-red-500/5 p-8 text-center">
+          <p className="text-sm font-medium text-red-400 mb-2">Failed to connect to chat</p>
+          <p className="text-xs text-muted-foreground mb-4">{error}</p>
+          <button
+            onClick={retry}
+            className="rounded-lg bg-gradient-to-r from-violet-600 to-purple-600 px-4 py-2 text-sm font-medium text-white transition-all hover:opacity-90"
+          >
+            Retry
+          </button>
+        </div>
+      </div>
+    );
   }
 
   if (!isReady) {

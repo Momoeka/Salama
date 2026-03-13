@@ -200,7 +200,7 @@ export default function ConversationPage() {
       <div className="sticky top-0 z-10 flex flex-shrink-0 items-center gap-3 border-b border-border bg-background px-4 py-3">
         <Link
           href="/messages"
-          className="rounded-lg p-1.5 text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground sm:hidden"
+          className="rounded-lg p-1.5 text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
         >
           <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <path d="m15 18-6-6 6-6" />
