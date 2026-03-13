@@ -58,6 +58,12 @@ export default function ConversationPage() {
       const targetUserId = searchParams.get("user");
 
       if (id === "NEW" && targetUserId) {
+        // Ensure target user exists in Stream
+        await fetch("/api/stream-upsert-user", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ id: targetUserId, name: targetUserId }),
+        });
         ch = client!.channel("messaging", {
           members: [userId!, targetUserId],
         });

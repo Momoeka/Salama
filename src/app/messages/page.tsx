@@ -78,11 +78,22 @@ export default function MessagesPage() {
     }
   }
 
-  async function startConversation(otherUserId: string) {
+  async function startConversation(otherUser: any) {
     if (!client || !userId) return;
     try {
+      // Ensure the other user exists in Stream before creating channel
+      await fetch("/api/stream-upsert-user", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          id: otherUser.id,
+          name: otherUser.username,
+          image: otherUser.avatar_url || undefined,
+        }),
+      });
+
       const channel = client.channel("messaging", {
-        members: [userId, otherUserId],
+        members: [userId, otherUser.id],
       });
       await channel.watch();
       window.location.href = `/messages/${channel.id}`;
@@ -140,7 +151,7 @@ export default function MessagesPage() {
               {searchResults.map((user: any) => (
                 <button
                   key={user.id}
-                  onClick={() => startConversation(user.id)}
+                  onClick={() => startConversation(user)}
                   className="flex w-full items-center gap-3 rounded-lg p-2 text-left transition-colors hover:bg-secondary"
                 >
                   {user.avatar_url ? (
