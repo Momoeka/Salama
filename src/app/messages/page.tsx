@@ -28,7 +28,7 @@ export default async function MessagesPage() {
   const conversations = await getConversations();
 
   return (
-    <div className="mx-auto max-w-2xl px-4 py-8 sm:px-6 lg:px-8">
+    <div className="mx-auto max-w-2xl px-2 py-4 sm:px-6 sm:py-8 lg:px-8">
       <MessagesHeader />
 
       {conversations.length === 0 ? (

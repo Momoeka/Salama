@@ -64,7 +64,7 @@ export default async function ExplorePage() {
   ]);
 
   return (
-    <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+    <div className="mx-auto max-w-7xl px-2 py-4 sm:px-6 sm:py-8 lg:px-8">
       <h1 className="mb-1 text-3xl font-bold text-foreground">Explore</h1>
       <p className="mb-8 text-muted-foreground">Discover trending posts and popular creators</p>
 
@@ -137,7 +137,7 @@ export default async function ExplorePage() {
             </p>
           </div>
         ) : (
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4">
+          <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-3 sm:gap-4">
             {trendingPosts.map((post: any, index: number) => (
               <Link
                 key={post.id}

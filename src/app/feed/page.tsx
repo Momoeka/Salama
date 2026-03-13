@@ -110,12 +110,12 @@ export default async function FeedPage() {
   return (
     <div className="mx-auto max-w-xl pb-8">
       {/* Stories Bar */}
-      <div className="px-4 pt-6">
+      <div className="px-0 pt-6 sm:px-4">
         <StoriesBar storiesData={storiesData} />
       </div>
 
       {!enrichedPosts || enrichedPosts.length === 0 ? (
-        <div className="mx-4 rounded-2xl border border-border bg-card p-12 text-center">
+        <div className="mx-0 rounded-none border border-border bg-card p-12 text-center sm:mx-4 sm:rounded-2xl">
           <svg
             xmlns="http://www.w3.org/2000/svg"
             width="48"

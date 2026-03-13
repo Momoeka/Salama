@@ -207,12 +207,12 @@ export function PostFeedItem({ post, isLoggedIn = true }: PostFeedItemProps) {
       </div>
 
       {/* Action bar */}
-      <div className="flex items-center px-4 pt-3 pb-1">
-        <div className="flex items-center gap-4">
+      <div className="flex items-center px-2 pt-3 pb-1 sm:px-4">
+        <div className="flex items-center gap-0 sm:gap-2">
           {/* Like */}
           <button
             onClick={() => requireAuth("like this post", handleLike)}
-            className="group transition-transform active:scale-90"
+            className="group flex min-h-[44px] min-w-[44px] items-center justify-center transition-transform active:scale-90"
             aria-label={liked ? "Unlike" : "Like"}
           >
             {liked ? (
@@ -251,7 +251,7 @@ export function PostFeedItem({ post, isLoggedIn = true }: PostFeedItemProps) {
           {/* Comment */}
           <button
             onClick={() => requireAuth("comment", handleCommentClick)}
-            className="group transition-transform active:scale-90"
+            className="group flex min-h-[44px] min-w-[44px] items-center justify-center transition-transform active:scale-90"
             aria-label="Comment"
           >
             <svg
@@ -273,7 +273,7 @@ export function PostFeedItem({ post, isLoggedIn = true }: PostFeedItemProps) {
           {/* DM */}
           <Link
             href={`/messages/NEW?user=${post.user.id}`}
-            className="group transition-transform active:scale-90"
+            className="group flex min-h-[44px] min-w-[44px] items-center justify-center transition-transform active:scale-90"
             aria-label="Message"
           >
             <svg
@@ -296,7 +296,7 @@ export function PostFeedItem({ post, isLoggedIn = true }: PostFeedItemProps) {
           {/* Share */}
           <button
             onClick={() => setShareOpen(true)}
-            className="group transition-transform active:scale-90"
+            className="group flex min-h-[44px] min-w-[44px] items-center justify-center transition-transform active:scale-90"
             aria-label="Share"
           >
             <svg
@@ -319,11 +319,11 @@ export function PostFeedItem({ post, isLoggedIn = true }: PostFeedItemProps) {
         </div>
 
         {/* Right side: Bookmark + More menu */}
-        <div className="ml-auto flex items-center gap-3">
+        <div className="ml-auto flex items-center gap-0 sm:gap-3">
           {/* Bookmark / Save */}
           <button
             onClick={() => requireAuth("save posts", handleSave)}
-            className="group transition-transform active:scale-90"
+            className="group flex min-h-[44px] min-w-[44px] items-center justify-center transition-transform active:scale-90"
             aria-label={saved ? "Unsave" : "Save"}
           >
             {saved ? (
@@ -363,7 +363,7 @@ export function PostFeedItem({ post, isLoggedIn = true }: PostFeedItemProps) {
           <div className="relative">
             <button
               onClick={() => setMoreMenuOpen((v) => !v)}
-              className="group transition-transform active:scale-90"
+              className="group flex min-h-[44px] min-w-[44px] items-center justify-center transition-transform active:scale-90"
               aria-label="More options"
             >
               <svg
@@ -483,6 +483,7 @@ export function PostFeedItem({ post, isLoggedIn = true }: PostFeedItemProps) {
         post={{
           image_url: post.image_url,
           caption: post.caption,
+          media_type: post.media_type,
           user: {
             username: post.user.username,
             avatar_url: post.user.avatar_url,

@@ -23,6 +23,7 @@ interface CommentPanelProps {
   post: {
     image_url: string;
     caption: string;
+    media_type?: string;
     user: {
       username: string;
       avatar_url: string | null;
@@ -75,7 +76,6 @@ export function CommentPanel({
   // Animate in/out
   useEffect(() => {
     if (isOpen) {
-      // Small delay to trigger CSS transition
       requestAnimationFrame(() => {
         setVisible(true);
       });
@@ -145,154 +145,244 @@ export function CommentPanel({
 
   if (!isOpen) return null;
 
+  const isVideo = post.media_type === "video";
+
+  // Shared comment list content
+  const commentList = (
+    <>
+      {comments.length === 0 ? (
+        <div className="flex h-full flex-col items-center justify-center text-muted-foreground">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="40"
+            height="40"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            className="mb-3 opacity-40"
+          >
+            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+          </svg>
+          <p className="text-sm">No comments yet</p>
+          <p className="text-xs">Be the first to comment</p>
+        </div>
+      ) : (
+        <div className="space-y-4">
+          {comments.map((comment) => (
+            <div key={comment.id} className="flex items-start gap-3">
+              {comment.user.avatar_url ? (
+                <img
+                  src={comment.user.avatar_url}
+                  alt={comment.user.username}
+                  className="h-8 w-8 flex-shrink-0 rounded-full object-cover"
+                />
+              ) : (
+                <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-muted text-xs font-bold text-muted-foreground">
+                  {comment.user.username?.[0]?.toUpperCase() || "?"}
+                </div>
+              )}
+              <div className="min-w-0 flex-1">
+                <div className="flex items-baseline gap-2">
+                  <span className="text-sm font-semibold text-foreground">
+                    {comment.user.username}
+                  </span>
+                  <span className="text-[11px] text-muted-foreground">
+                    {timeAgo(comment.created_at)}
+                  </span>
+                </div>
+                <p className="mt-0.5 break-words text-sm text-foreground/90">
+                  {comment.content}
+                </p>
+              </div>
+            </div>
+          ))}
+          <div ref={commentsEndRef} />
+        </div>
+      )}
+    </>
+  );
+
+  // Shared comment input
+  const commentInput = (
+    <form
+      onSubmit={handleSubmitComment}
+      className="flex items-center gap-2 border-t border-border px-4 py-3"
+    >
+      <input
+        ref={inputRef}
+        type="text"
+        placeholder="Add a comment..."
+        value={commentText}
+        onChange={(e) => setCommentText(e.target.value)}
+        className="flex-1 rounded-full bg-muted px-4 py-2 text-sm text-foreground outline-none placeholder:text-muted-foreground focus:ring-1 focus:ring-primary"
+      />
+      <button
+        type="submit"
+        disabled={!commentText.trim() || isPending}
+        className="text-sm font-semibold text-primary transition-opacity hover:opacity-70 disabled:opacity-40"
+      >
+        Post
+      </button>
+    </form>
+  );
+
+  // Shared header
+  const header = (
+    <div className="flex items-center gap-3 border-b border-border px-4 py-3">
+      {post.user.avatar_url ? (
+        <img
+          src={post.user.avatar_url}
+          alt={post.user.username}
+          className="h-8 w-8 rounded-full object-cover ring-2 ring-border"
+        />
+      ) : (
+        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-xs font-bold text-primary-foreground ring-2 ring-border">
+          {post.user.username?.[0]?.toUpperCase() || "?"}
+        </div>
+      )}
+      <div className="flex-1">
+        <p className="text-sm font-semibold text-foreground">
+          {post.user.username}
+        </p>
+        <p className="text-xs text-muted-foreground">
+          {commentCount} {commentCount === 1 ? "comment" : "comments"}
+        </p>
+      </div>
+      <button
+        onClick={onClose}
+        className="rounded-full p-1.5 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+        aria-label="Close comments"
+      >
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          width="20"
+          height="20"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        >
+          <line x1="18" x2="6" y1="6" y2="18" />
+          <line x1="6" x2="18" y1="6" y2="18" />
+        </svg>
+      </button>
+    </div>
+  );
+
   return (
-    <div className="fixed inset-0 z-50 flex justify-end">
-      {/* Overlay */}
+    <div className="fixed inset-0 z-50 flex items-center justify-center">
+      {/* Backdrop */}
       <div
-        className={`absolute inset-0 bg-black/60 transition-opacity duration-300 ${
+        className={`absolute inset-0 bg-black/60 backdrop-blur-sm transition-opacity duration-300 ${
           visible ? "opacity-100" : "opacity-0"
         }`}
         onClick={onClose}
       />
 
-      {/* Panel */}
+      {/* ===== DESKTOP MODAL (sm+): side-by-side image + comments ===== */}
       <div
-        className={`relative flex h-full w-full flex-col bg-card shadow-2xl transition-transform duration-300 ease-out sm:w-[420px] ${
-          visible ? "translate-x-0" : "translate-x-full"
+        className={`relative hidden max-h-[90vh] w-full max-w-4xl mx-4 overflow-hidden rounded-2xl border border-border bg-card shadow-2xl transition-all duration-300 sm:flex ${
+          visible ? "scale-100 opacity-100" : "scale-95 opacity-0"
+        }`}
+      >
+        {/* LEFT: Image / Video */}
+        <div className="relative flex w-[55%] items-center justify-center bg-black">
+          {isVideo ? (
+            <video
+              src={post.image_url}
+              controls
+              className="h-full w-full object-contain"
+              style={{ maxHeight: "90vh" }}
+            />
+          ) : (
+            <img
+              src={post.image_url}
+              alt="Post"
+              className="h-full w-full object-contain"
+              style={{ maxHeight: "90vh" }}
+            />
+          )}
+        </div>
+
+        {/* RIGHT: Comments panel */}
+        <div className="flex w-[45%] flex-col">
+          {/* Header */}
+          {header}
+
+          {/* Caption */}
+          {post.caption && (
+            <div className="border-b border-border px-4 py-3">
+              <div className="flex items-start gap-3">
+                {post.user.avatar_url ? (
+                  <img
+                    src={post.user.avatar_url}
+                    alt={post.user.username}
+                    className="h-8 w-8 flex-shrink-0 rounded-full object-cover"
+                  />
+                ) : (
+                  <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-muted text-xs font-bold text-muted-foreground">
+                    {post.user.username?.[0]?.toUpperCase() || "?"}
+                  </div>
+                )}
+                <div className="min-w-0 flex-1">
+                  <span className="text-sm font-semibold text-foreground">
+                    {post.user.username}
+                  </span>
+                  <p className="mt-0.5 text-sm text-foreground/90">
+                    {post.caption}
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Scrollable comment list */}
+          <div className="flex-1 overflow-y-auto px-4 py-3">{commentList}</div>
+
+          {/* Comment input */}
+          {commentInput}
+        </div>
+      </div>
+
+      {/* ===== MOBILE MODAL (<sm): full-screen stacked ===== */}
+      <div
+        className={`relative flex h-full w-full flex-col bg-card transition-all duration-300 sm:hidden ${
+          visible ? "translate-y-0 opacity-100" : "translate-y-4 opacity-0"
         }`}
       >
         {/* Header */}
-        <div className="flex items-center gap-3 border-b border-border px-4 py-3">
-          {post.user.avatar_url ? (
-            <img
-              src={post.user.avatar_url}
-              alt={post.user.username}
-              className="h-8 w-8 rounded-full object-cover ring-2 ring-border"
+        {header}
+
+        {/* Post preview thumbnail + caption */}
+        <div className="flex items-start gap-3 border-b border-border px-4 py-3">
+          {isVideo ? (
+            <video
+              src={post.image_url}
+              className="h-14 w-14 flex-shrink-0 rounded-lg object-cover"
+              muted
             />
           ) : (
-            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-xs font-bold text-primary-foreground ring-2 ring-border">
-              {post.user.username?.[0]?.toUpperCase() || "?"}
-            </div>
+            <img
+              src={post.image_url}
+              alt="Post"
+              className="h-14 w-14 flex-shrink-0 rounded-lg object-cover"
+            />
           )}
-          <div className="flex-1">
-            <p className="text-sm font-semibold text-foreground">
-              {post.user.username}
-            </p>
-            <p className="text-xs text-muted-foreground">
-              {commentCount} {commentCount === 1 ? "comment" : "comments"}
-            </p>
-          </div>
-          <button
-            onClick={onClose}
-            className="rounded-full p-1.5 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
-            aria-label="Close comments"
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="20"
-              height="20"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <line x1="18" x2="6" y1="6" y2="18" />
-              <line x1="6" x2="18" y1="6" y2="18" />
-            </svg>
-          </button>
-        </div>
-
-        {/* Post preview */}
-        <div className="flex items-start gap-3 border-b border-border px-4 py-3">
-          <img
-            src={post.image_url}
-            alt="Post"
-            className="h-14 w-14 flex-shrink-0 rounded-lg object-cover"
-          />
           <p className="line-clamp-3 text-sm text-muted-foreground">
             {post.caption}
           </p>
         </div>
 
-        {/* Comments list (scrollable) */}
-        <div className="flex-1 overflow-y-auto px-4 py-3">
-          {comments.length === 0 ? (
-            <div className="flex h-full flex-col items-center justify-center text-muted-foreground">
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                width="40"
-                height="40"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="1.5"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                className="mb-3 opacity-40"
-              >
-                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
-              </svg>
-              <p className="text-sm">No comments yet</p>
-              <p className="text-xs">Be the first to comment</p>
-            </div>
-          ) : (
-            <div className="space-y-4">
-              {comments.map((comment) => (
-                <div key={comment.id} className="flex items-start gap-3">
-                  {comment.user.avatar_url ? (
-                    <img
-                      src={comment.user.avatar_url}
-                      alt={comment.user.username}
-                      className="h-8 w-8 flex-shrink-0 rounded-full object-cover"
-                    />
-                  ) : (
-                    <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-muted text-xs font-bold text-muted-foreground">
-                      {comment.user.username?.[0]?.toUpperCase() || "?"}
-                    </div>
-                  )}
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-baseline gap-2">
-                      <span className="text-sm font-semibold text-foreground">
-                        {comment.user.username}
-                      </span>
-                      <span className="text-[11px] text-muted-foreground">
-                        {timeAgo(comment.created_at)}
-                      </span>
-                    </div>
-                    <p className="mt-0.5 text-sm text-foreground/90 break-words">
-                      {comment.content}
-                    </p>
-                  </div>
-                </div>
-              ))}
-              <div ref={commentsEndRef} />
-            </div>
-          )}
-        </div>
+        {/* Scrollable comment list */}
+        <div className="flex-1 overflow-y-auto px-4 py-3">{commentList}</div>
 
-        {/* Comment input - fixed at bottom */}
-        <form
-          onSubmit={handleSubmitComment}
-          className="flex items-center gap-2 border-t border-border px-4 py-3"
-        >
-          <input
-            ref={inputRef}
-            type="text"
-            placeholder="Add a comment..."
-            value={commentText}
-            onChange={(e) => setCommentText(e.target.value)}
-            className="flex-1 rounded-full bg-muted px-4 py-2 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:ring-1 focus:ring-primary"
-          />
-          <button
-            type="submit"
-            disabled={!commentText.trim() || isPending}
-            className="text-sm font-semibold text-primary transition-opacity disabled:opacity-40 hover:opacity-70"
-          >
-            Post
-          </button>
-        </form>
+        {/* Comment input */}
+        {commentInput}
       </div>
     </div>
   );

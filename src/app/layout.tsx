@@ -162,24 +162,17 @@ export default function RootLayout({
               </div>
             </div>
 
-            {/* Mobile Nav (signed in) */}
-            <Show when="signed-in">
-              <div className="flex items-center justify-around border-t border-border px-4 py-2 sm:hidden">
+          </nav>
+
+          {/* Mobile Bottom Nav (fixed, 5 items) */}
+          <Show when="signed-in">
+            <nav className="fixed bottom-0 left-0 right-0 z-50 border-t border-white/[0.04] bg-background/90 backdrop-blur-xl sm:hidden pb-safe" style={{ paddingBottom: 'max(0.5rem, env(safe-area-inset-bottom))' }}>
+              <div className="flex items-center justify-around px-2 pt-2">
                 <Link
                   href="/feed"
-                  className="flex flex-col items-center gap-1 text-xs text-muted-foreground"
+                  className="flex min-h-[44px] min-w-[44px] flex-col items-center justify-center gap-1 text-xs text-muted-foreground"
                 >
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    width="18"
-                    height="18"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  >
+                  <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                     <rect width="7" height="7" x="3" y="3" rx="1" />
                     <rect width="7" height="7" x="14" y="3" rx="1" />
                     <rect width="7" height="7" x="14" y="14" rx="1" />
@@ -189,132 +182,52 @@ export default function RootLayout({
                 </Link>
                 <Link
                   href="/explore"
-                  className="flex flex-col items-center gap-1 text-xs text-muted-foreground"
+                  className="flex min-h-[44px] min-w-[44px] flex-col items-center justify-center gap-1 text-xs text-muted-foreground"
                 >
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    width="18"
-                    height="18"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  >
+                  <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                     <circle cx="12" cy="12" r="10" />
                     <polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76" />
                   </svg>
                   Explore
                 </Link>
                 <Link
-                  href="/search"
-                  className="flex flex-col items-center gap-1 text-xs text-muted-foreground"
-                >
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    width="18"
-                    height="18"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  >
-                    <circle cx="11" cy="11" r="8" />
-                    <path d="m21 21-4.3-4.3" />
-                  </svg>
-                  Search
-                </Link>
-                <Link
                   href="/upload"
-                  className="flex flex-col items-center gap-1 text-xs text-primary"
+                  className="flex min-h-[48px] min-w-[48px] flex-col items-center justify-center gap-1 text-xs text-white"
                 >
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    width="18"
-                    height="18"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  >
-                    <circle cx="12" cy="12" r="10" />
-                    <path d="M8 12h8" />
-                    <path d="M12 8v8" />
-                  </svg>
-                  Upload
+                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-r from-violet-600 to-purple-600 shadow-lg shadow-purple-500/30">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M12 5v14" />
+                      <path d="M5 12h14" />
+                    </svg>
+                  </div>
                 </Link>
                 <Link
                   href="/messages"
-                  className="flex flex-col items-center gap-1 text-xs text-muted-foreground"
+                  className="flex min-h-[44px] min-w-[44px] flex-col items-center justify-center gap-1 text-xs text-muted-foreground"
                 >
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    width="18"
-                    height="18"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  >
+                  <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                     <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
                   </svg>
                   Messages
                 </Link>
                 <Link
-                  href="/notifications"
-                  className="flex flex-col items-center gap-1 text-xs text-muted-foreground"
-                >
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    width="18"
-                    height="18"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  >
-                    <path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9" />
-                    <path d="M10.3 21a1.94 1.94 0 0 0 3.4 0" />
-                  </svg>
-                  Alerts
-                </Link>
-                <Link
                   href="/profile"
-                  className="flex flex-col items-center gap-1 text-xs text-muted-foreground"
+                  className="flex min-h-[44px] min-w-[44px] flex-col items-center justify-center gap-1 text-xs text-muted-foreground"
                 >
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    width="18"
-                    height="18"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  >
+                  <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                     <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" />
                     <circle cx="12" cy="7" r="4" />
                   </svg>
                   Profile
                 </Link>
               </div>
-            </Show>
-          </nav>
+            </nav>
+          </Show>
 
-          <main className="min-h-[calc(100vh-4rem)]">{children}</main>
+          <main className="min-h-[calc(100vh-4rem)] pb-20 sm:pb-0">{children}</main>
 
-          {/* Footer */}
-          <footer className="border-t border-white/[0.04] bg-background/50 py-10">
+          {/* Footer (hidden on mobile where bottom nav is shown) */}
+          <footer className="hidden border-t border-white/[0.04] bg-background/50 py-10 sm:block">
             <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
               <div className="flex flex-col items-center justify-between gap-6 sm:flex-row">
                 <div className="flex items-center gap-2.5">
