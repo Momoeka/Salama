@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, createContext, useContext } from "react";
+import { useAuth } from "@clerk/nextjs";
 import { StreamChat, Channel as StreamChannel } from "stream-chat";
 
 interface StreamChatContextType {
@@ -20,11 +21,15 @@ export function useStreamChat() {
 }
 
 export function StreamChatProvider({ children }: { children: React.ReactNode }) {
+  const { isSignedIn, isLoaded } = useAuth();
   const [client, setClient] = useState<StreamChat | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
   const [isReady, setIsReady] = useState(false);
 
   useEffect(() => {
+    // Don't init Stream Chat if not signed in or auth not loaded yet
+    if (!isLoaded || !isSignedIn) return;
+
     let didCancel = false;
     let chatClient: StreamChat | null = null;
 
@@ -65,7 +70,7 @@ export function StreamChatProvider({ children }: { children: React.ReactNode }) 
         chatClient.disconnectUser().catch(() => {});
       }
     };
-  }, []);
+  }, [isLoaded, isSignedIn]);
 
   return (
     <StreamChatContext.Provider value={{ client, userId, isReady }}>
